@@ -1,17 +1,26 @@
-import SectionPlaceholder from "@/components/SectionPlaceholder";
+"use client";
 
-/**
- * Section 05: Features
- * Placeholder — replace this with the real section. Keep id="features" on the outer <section>:
- * the nav links to it. Put styles in a Features.module.css next to this file.
- */
+import { useEffect, useRef } from "react";
+import { FEATURES_MARKUP } from "./markup";
+import { initFeatures } from "./initFeatures";
+
+/* Features section: pinned, scroll-driven scenes for Trace, Check and Explain.
+   Styles live in ./features.css, imported once in app/layout.tsx. */
 export default function Features() {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    return initFeatures(ref.current);
+  }, []);
+
   return (
-    <SectionPlaceholder
+    <section
+      ref={ref}
+      className="ft"
       id="features"
-      number="05"
-      title="Features"
-      brief={["What this section should cover goes here"]}
+      aria-labelledby="ft-title"
+      dangerouslySetInnerHTML={{ __html: FEATURES_MARKUP }}
     />
   );
 }
