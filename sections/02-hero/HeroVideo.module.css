@@ -1,0 +1,288 @@
+.hero {
+  position: relative;
+  background: #ececed;
+}
+
+/* The part that stays pinned on screen while you scroll through the hero */
+.stage {
+  --p: 0;  /* scroll progress 0..1  (set from JS) */
+  --mx: 0; /* mouse x -1..1         (set from JS) */
+  --my: 0; /* mouse y -1..1         (set from JS) */
+
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #e9e9eb;
+  color: #0c0c0d;
+}
+
+.video,
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.video {
+  object-fit: cover;
+  transition: opacity 0.8s ease;
+}
+
+/* First frame, shown instantly while the clips load (the 3D canvas fades in over it) */
+.poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The packed colour+depth video is only a texture source for the 3D canvas.
+   It stays hidden so it never shows through (no ghosting while the canvas fades in). */
+.videoPacked {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.canvas {
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+/* Once WebGL has its first frame, swap the plain video for the canvas */
+.stage[data-mode="gl"][data-ready="true"] .canvas {
+  opacity: 1;
+}
+
+/* ---------- Text layer ---------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(20px, 4vw, 56px);
+  padding-top: calc(64px + clamp(16px, 3vw, 40px)); /* clear the fixed nav bar */
+  pointer-events: none;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.pill {
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 0.55em 1.1em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: calc(1 - var(--p) * 2.5);
+}
+
+/* With 3D on, "Pre-cure · Surface · Traceability" is printed inside the white band instead */
+.stage[data-mode="gl"] .pill {
+  display: none;
+}
+
+/* ---------- Under the white band ---------- */
+/* Sits in the clear strip below the band, between the arm on the left and the robot base on
+   the right: a short line, a few words, and a rule marked with the tyre's layers. The marker
+   travels through the layers as you scroll (the layer it reaches lights up). It drifts a
+   little with the mouse and fades as the tyre comes apart. */
+.sub {
+  --gut: clamp(20px, 4vw, 56px);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* how far through the layers: 0..1 over the first stretch of scrolling */
+  --scan: clamp(0, calc(var(--p) / 0.42), 1);
+  position: absolute;
+  left: 30vw;
+  right: 21vw;
+  bottom: calc(var(--gut) * 0.45);
+  display: grid;
+  grid-template-columns: auto minmax(0, 36ch);
+  column-gap: clamp(28px, 3.2vw, 64px);
+  align-items: end;
+  color: #0c0c0d;
+  opacity: clamp(0, calc(1 - var(--p) * 2.2), 1);
+  transform: translate3d(calc(var(--mx) * -8px), calc(var(--my) * 4px + var(--p) * -6vh), 0);
+}
+
+.lead {
+  margin: 0;
+  font-size: clamp(20px, 1.55vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
+}
+
+/* each line rises out of its own slot */
+.line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+.line > span {
+  display: block;
+  animation: rise 0.95s var(--ease) 0.45s backwards;
+}
+
+.line + .line > span {
+  animation-delay: 0.55s;
+}
+
+.body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgb(12 12 13 / 0.64);
+  animation: fadeUp 0.9s var(--ease) 0.75s backwards;
+}
+
+.layers {
+  grid-column: 1 / -1;
+  margin-top: clamp(12px, 1.3vw, 18px);
+}
+
+/* measuring rule: hairline with ticks every 8 px, longer every 40 */
+.rule {
+  position: relative;
+  display: block;
+  height: 7px;
+  background:
+    linear-gradient(rgb(12 12 13 / 0.5), rgb(12 12 13 / 0.5)) bottom / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, rgb(12 12 13 / 0.45) 0 1px, transparent 1px 40px) bottom / 100% 7px no-repeat,
+    repeating-linear-gradient(90deg, rgb(12 12 13 / 0.25) 0 1px, transparent 1px 8px) bottom / 100% 3px no-repeat;
+  transform-origin: left;
+  animation: draw 1.1s var(--ease) 0.2s backwards;
+}
+
+/* the stretch already inspected, and the marker at its end */
+.rule::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #0c0c0d;
+  transform: scaleX(var(--scan));
+  transform-origin: left;
+}
+
+.marker {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--scan) * 100%);
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: #0c0c0d;
+}
+
+/* layer names, spread along the rule; the one the marker has reached is darkest */
+.names {
+  position: relative;
+  height: 1.6em;
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: fadeUp 0.9s var(--ease) 0.9s backwards;
+}
+
+.names li {
+  position: absolute;
+  left: calc(var(--i) * 100%);
+  transform: translateX(calc(var(--i) * -100%));
+  white-space: nowrap;
+  opacity: clamp(0.38, calc(1 - max(var(--scan) - var(--i), var(--i) - var(--scan)) * 5), 1);
+}
+
+/* the intro waits until the scene is ready (or the plain-video fallback is showing) */
+.stage:not([data-ready="true"]):not([data-mode="fallback"]) .sub * {
+  animation-play-state: paused;
+}
+
+@keyframes draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* "Every layer measured. Every tyre traced." fades in mid-scroll, top-left: the one area the
+   machine never crosses once it comes apart */
+.caption {
+  position: absolute;
+  left: clamp(20px, 4vw, 56px);
+  top: calc(64px + 12px + clamp(20px, 6vh, 64px));
+  margin: 0;
+  font-size: clamp(1.8rem, 4.2vw, 3.6rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  opacity: clamp(0, min(calc((var(--p) - 0.42) * 6), calc((0.97 - var(--p)) * 6)), 1);
+  transform: translate3d(calc(var(--mx) * -14px), calc((0.7 - var(--p)) * 8vh), 0);
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* Narrow screens: the strip under the band is too thin, so the text goes to the clear area at
+   the top instead */
+@media (max-width: 900px) {
+  .sub {
+    left: var(--gut);
+    right: var(--gut);
+    top: calc(64px + 28px);
+    bottom: auto;
+    grid-template-columns: 1fr;
+    row-gap: 12px;
+  }
+
+  .lead {
+    font-size: clamp(26px, 7vw, 36px);
+  }
+
+  /* the paragraph and layer names would run into the arm here: line and rule carry it */
+  .body,
+  .names {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sub,
+  .sub * {
+    animation: none !important;
+  }
+}
