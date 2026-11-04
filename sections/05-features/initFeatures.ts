@@ -153,7 +153,7 @@ export function initFeatures(sec: HTMLElement): () => void {
   }
 
   function layout() {
-    stacked = window.innerWidth < 960 || reduce.matches;
+    stacked = window.innerWidth < 960;
     sec.classList.toggle("is-stacked", stacked);
     scroll.style.height = stacked ? "" : N * 85 + 100 + "vh";
     if (!stacked) onScroll();

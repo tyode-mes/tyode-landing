@@ -184,5 +184,9 @@
 @media (prefers-reduced-motion:reduce){
   .ft *,.ft *::before,.ft *::after{animation:none!important;transition:none!important}
   .ft .sc .draw{stroke-dashoffset:0}.ft .sc .pop{opacity:1;transform:none}.ft .sc .bar{transform:none}
-  .ft .ft-h .ln > span,.ft .ft-item h3 .ln > span{transform:none}.ft .ft-lede{opacity:1;transform:none}
+  .ft .sc .dot.hit{fill:var(--s-ink)}.ft .sc .dot.ship{fill:var(--sig)}
+  .ft .sc .node{fill:var(--s-ink);stroke:var(--s-ink)}
+  .ft .sc .tile.pick{stroke:var(--sig);stroke-width:2;fill:rgb(255 77 46 / .1)}
+  .ft .sc .void{opacity:1}
+  .ft .ft-h .ln > span{transform:none}.ft .ft-lede{opacity:1;transform:none}
 }
