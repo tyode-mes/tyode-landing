@@ -29,6 +29,14 @@
   place-items: center;
 }
 
+/* everything sizes inside its own box (padding included), so nothing spills off small screens */
+.dialog,
+.dialog *,
+.dialog *::before,
+.dialog *::after {
+  box-sizing: border-box;
+}
+
 .dialog::backdrop {
   background: rgb(12 12 13 / 0.45);
   backdrop-filter: blur(14px) saturate(1.15);
@@ -245,6 +253,41 @@
 .body[data-failed] .skeleton i,
 .body[data-failed] .skeleton b {
   animation: none;
+}
+
+/* ---------- slim scrollbar ----------
+   A thin rounded bar, inset from the edge and clear of the rounded corners. It stays faint
+   until the pointer is over the panel, and darkens while it's being dragged. */
+.body::-webkit-scrollbar {
+  width: 14px;
+}
+
+.body::-webkit-scrollbar-track {
+  margin: 22px 0;
+  background: transparent;
+}
+
+.body::-webkit-scrollbar-thumb {
+  border: 5px solid transparent;
+  border-radius: 999px;
+  background-color: rgb(12 12 13 / 0.08);
+  background-clip: padding-box;
+}
+
+.body:hover::-webkit-scrollbar-thumb {
+  background-color: rgb(12 12 13 / 0.22);
+}
+
+.body::-webkit-scrollbar-thumb:active {
+  background-color: rgb(12 12 13 / 0.38);
+}
+
+/* Firefox uses its own thin scrollbar setting */
+@supports (-moz-appearance: none) {
+  .body {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(12 12 13 / 0.2) transparent;
+  }
 }
 
 /* phones: nearly full screen; the calendar fills the panel */
