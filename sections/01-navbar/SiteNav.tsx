@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from "react";
 import { LOGO } from "@/components/brand/TyodeLogo";
 import TyodeMark from "@/components/brand/TyodeMark";
+import BookingModal from "@/components/booking/BookingModal";
+import { BOOKING_URL, openBooking } from "@/components/booking/booking";
 import styles from "./SiteNav.module.css";
 
 /**
@@ -20,7 +22,8 @@ const LINKS = [
   { href: "#impact", label: "Impact" },
   { href: "#team", label: "Team" },
 ];
-const CTA = { href: "#footer", label: "Book a walkthrough" };
+// opens the team's Cal.com booking calendar in a pop-up over the site (see components/booking)
+const CTA = { href: BOOKING_URL, label: "Book a walkthrough" };
 
 // logo size in the bar: the whole logo (ascender to descender) this many px tall
 const LOGO_PX = 27;
@@ -116,7 +119,7 @@ export default function SiteNav() {
         </nav>
 
         <div className={styles.end}>
-          <a href={CTA.href} className={styles.cta}>
+          <a href={CTA.href} className={styles.cta} target="_blank" rel="noopener noreferrer" onClick={openBooking}>
             {CTA.label}
             <span className={styles.arrow} aria-hidden="true">
               →
@@ -145,10 +148,22 @@ export default function SiteNav() {
             {l.label}
           </a>
         ))}
-        <a href={CTA.href} className={styles.panelCta} onClick={() => setOpen(false)}>
+        <a
+          href={CTA.href}
+          className={styles.panelCta}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            setOpen(false);
+            openBooking(e);
+          }}
+        >
           {CTA.label} →
         </a>
       </div>
+
+      {/* the booking pop-up, shared by every "Book a walkthrough" button on the page */}
+      <BookingModal />
     </header>
   );
 }

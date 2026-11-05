@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { LOGO } from "@/components/brand/TyodeLogo";
 import TyodeMark from "@/components/brand/TyodeMark";
+import { BOOKING_URL, openBooking } from "@/components/booking/booking";
+import ContactModal from "@/components/contact/ContactModal";
+import { openContact } from "@/components/contact/contact";
 import styles from "./Footer.module.css";
 
 // room round the logo for its construction lines (logo units), and where the giant logo is
@@ -25,7 +28,7 @@ const LINKS = [
  * Section 08: Footer — a white band asking to work together (the hero's white band, full
  * height), then the small print, the site's sections, and the Tyode logo drawn huge across
  * the bottom and cut off by the edge of the page, construction lines and all. The logo's
- * intro plays when the footer comes into view. The nav's CTA links to id="footer".
+ * intro plays when the footer comes into view.
  */
 export default function Footer() {
   const giantRef = useRef<HTMLDivElement>(null);
@@ -66,8 +69,12 @@ export default function Footer() {
           Let&apos;s trace it <b>together</b>
         </p>
         <div className={styles.ctaLinks}>
-          <a href="#">Book a walkthrough</a>
-          <a href="#">Get in touch</a>
+          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" onClick={openBooking}>
+            Book a walkthrough
+          </a>
+          <a href="#footer" onClick={openContact}>
+            Get in touch
+          </a>
         </div>
       </div>
 
@@ -135,6 +142,9 @@ export default function Footer() {
           <TyodeMark pad={PAD} />
         </div>
       </div>
+
+      {/* the "Get in touch" pop-up (contact form) */}
+      <ContactModal />
     </footer>
   );
 }
