@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { LOGO } from "@/components/brand/TyodeLogo";
 import TyodeMark from "@/components/brand/TyodeMark";
+import { BOOKING_URL, openBooking } from "@/components/booking/booking";
+import ContactModal from "@/components/contact/ContactModal";
+import { openContact } from "@/components/contact/contact";
 import styles from "./Footer.module.css";
 
 // room round the logo for its construction lines (logo units), and where the giant logo is
@@ -25,7 +28,7 @@ const LINKS = [
  * Section 08: Footer — a white band asking to work together (the hero's white band, full
  * height), then the small print, the site's sections, and the Tyode logo drawn huge across
  * the bottom and cut off by the edge of the page, construction lines and all. The logo's
- * intro plays when the footer comes into view. The nav's CTA links to id="footer".
+ * intro plays when the footer comes into view.
  */
 export default function Footer() {
   const giantRef = useRef<HTMLDivElement>(null);
@@ -66,8 +69,12 @@ export default function Footer() {
           Let&apos;s trace it <b>together</b>
         </p>
         <div className={styles.ctaLinks}>
-          <a href="#">Book a walkthrough</a>
-          <a href="#">Get in touch</a>
+          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" onClick={openBooking}>
+            Book a walkthrough
+          </a>
+          <a href="#footer" onClick={openContact}>
+            Get in touch
+          </a>
         </div>
       </div>
 
@@ -86,7 +93,7 @@ export default function Footer() {
                   <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3" />
                 </svg>
               </a>
-              <a href="#" aria-label="Email Tyode">
+              <a href="#footer" aria-label="Email Tyode" onClick={openContact}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M4 4h16a2 2 0 0 1 2 2v.4l-10 6.25L2 6.4V6a2 2 0 0 1 2-2zm-2 4.75 9.47 5.92a1 1 0 0 0 1.06 0L22 8.75V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" />
                 </svg>
@@ -130,6 +137,9 @@ export default function Footer() {
           <TyodeMark pad={PAD} />
         </div>
       </div>
+
+      {/* the "Get in touch" pop-up (contact form) */}
+      <ContactModal />
     </footer>
   );
 }

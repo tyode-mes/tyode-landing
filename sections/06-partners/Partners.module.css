@@ -1,6 +1,8 @@
 /* Section 06: partners. Same page colour, ink, type and glass tiles as the overview. */
 .wrap{
   --ink:#0c0c0d; --ink-2:rgb(12 12 13 / .62); --hair:rgb(12 12 13 / .08); --ease:cubic-bezier(.16,1,.3,1);
+  --in:cubic-bezier(.32,.08,.24,1);  /* hover in: starts softly, long gentle settle */
+  --out:cubic-bezier(.4,0,.6,1);     /* hover out: smooth and a little quicker */
   position:relative; background:#ececed; color:var(--ink);
   padding:clamp(80px,12vh,140px) clamp(20px,5vw,80px);
   font-family:var(--font-inter,"Inter"),system-ui,sans-serif; font-feature-settings:"cv11","ss01";
@@ -18,13 +20,20 @@
   box-shadow:0 30px 60px -46px rgb(0 0 0 / .4)}
 .cell{position:relative;display:grid;place-items:center;height:clamp(150px,18vw,200px);padding:24px}
 .cell + .cell::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--hair)}
-/* light that blooms under the pointer */
+/* ---------- hover ----------
+   Apple-style: after a brief pause (so brushing past doesn't trigger it) the logo eases from
+   grey into its own colour while growing a touch, and a soft light blooms behind it. Going in
+   is slow and even; letting go is a little quicker, so it never feels sticky. */
 .cell::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
-  background:radial-gradient(60% 70% at 50% 50%,rgb(255 255 255 / .95),rgb(255 255 255 / 0));transition:opacity .6s var(--ease)}
-.cell:hover::after{opacity:1}
+  background:radial-gradient(55% 65% at 50% 50%,rgb(255 255 255 / .9),rgb(255 255 255 / 0));
+  transition:opacity 1s var(--out)}
+.cell:hover::after{opacity:1;transition:opacity 1.8s var(--in) .1s}
+
 .cell img{position:relative;z-index:1;display:block;width:auto;max-width:82%;
-  filter:grayscale(1);opacity:.6;transition:opacity .6s var(--ease),filter .6s var(--ease),transform .6s var(--ease)}
-.cell:hover img{opacity:1;filter:grayscale(0);transform:scale(1.04)}
+  filter:grayscale(1);opacity:.6;transform:scale(1);backface-visibility:hidden;
+  transition:filter 1s var(--out),opacity 1s var(--out),transform 1.2s var(--out)}
+.cell:hover img{filter:grayscale(0);opacity:1;transform:scale(1.035);
+  transition:filter 1.8s var(--in) .1s,opacity 1.8s var(--in) .1s,transform 2.4s var(--in) .1s}
 
 /* gentle reveal as the panel scrolls into view (browsers without scroll timelines just show it) */
 @supports (animation-timeline: view()){
@@ -39,8 +48,10 @@
   .cell + .cell::before{left:18%;right:18%;top:0;bottom:auto;width:auto;height:1px}
   .cell img{max-height:52px}
 }
-@media (hover:none){.cell::after{display:none}}
+/* touch screens never hover: show the logos in full colour instead */
+@media (hover:none){.cell::after{display:none}.cell img{filter:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){
   .head,.panel{animation:none}
-  .cell img,.cell::after{transition:none}
+  .cell img,.cell::after,.cell:hover img,.cell:hover::after{transition:none}
+  .cell:hover img{transform:none}
 }

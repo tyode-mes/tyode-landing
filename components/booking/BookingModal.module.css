@@ -1,0 +1,342 @@
+/* Booking pop-up: a frosted backdrop, a rounded white panel holding the Cal.com calendar, a
+   round close button floating just outside the panel's corner, and a quiet link underneath.
+   Apple-style: the page behind dims and blurs while the panel rises gently into place and
+   fades in, on the iOS sheet curve (quick to start moving, very slow to settle, never
+   bouncing). Closing sinks it back down and fades it out. */
+.dialog {
+  --ink: #0c0c0d;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --sheet: cubic-bezier(0.32, 0.72, 0, 1); /* Apple's sheet curve */
+  /* fill the screen, transparent: clicks around the panel land on the dialog itself */
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  --pad-y: clamp(16px, 4vh, 40px);
+  padding: var(--pad-y) clamp(12px, 3vw, 32px);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-inter, "Inter"), system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialog::backdrop {
+  background: rgb(12 12 13 / 0.45);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  animation: backdropIn 0.7s var(--sheet);
+}
+
+.dialog[data-closing]::backdrop {
+  animation: backdropOut 0.45s var(--sheet) forwards;
+}
+
+/* ---------- layout: close button row, panel, link ---------- */
+/* a column capped at the screen's height: the panel shrinks (and its calendar scrolls) when
+   space runs out, so the close button and the link always stay on screen */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(1000px, 100%);
+  max-height: calc(100dvh - 2 * var(--pad-y));
+  animation: sheetIn 0.8s var(--sheet) 0.05s backwards;
+}
+
+.dialog[data-closing] .stack {
+  animation: sheetOut 0.45s var(--sheet) forwards;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.6),
+    0 50px 100px -30px rgb(0 0 0 / 0.5);
+}
+
+/* round white close button, floating above the panel's top-right corner */
+.close {
+  align-self: flex-end;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 6px 20px -6px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.5s var(--ease);
+}
+
+.close:hover {
+  background: #fff;
+  transform: rotate(90deg);
+}
+
+.close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.close span,
+.close span::after {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+.close span::after {
+  content: "";
+  transform: rotate(90deg);
+}
+
+/* quiet link under the panel */
+.newTab {
+  align-self: center;
+  flex: none;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.newTab:hover,
+.newTab:focus-visible {
+  color: #fff;
+}
+
+/* ---------- the calendar ---------- */
+/* sized by the calendar itself (no empty space under it); scrolls if the screen is too short */
+.body {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: min(540px, 56vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: contentIn 0.9s var(--sheet) 0.2s backwards;
+}
+
+/* Cal.com's embed goes in here; it fades in once it's ready */
+.cal {
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.cal iframe {
+  display: block;
+}
+
+.body[data-loaded] .cal {
+  opacity: 1;
+}
+
+/* shimmering placeholder in the shape of a booking page; fades out as the calendar fades in */
+.skeleton {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(200px, 28%) 1fr;
+  transition: opacity 0.5s ease;
+}
+
+.body[data-loaded] .skeleton {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skSide,
+.skMain {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 30px 28px;
+}
+
+.skSide {
+  border-right: 1px solid #ececed;
+}
+
+.skeleton i,
+.skeleton b {
+  display: block;
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f1f3 0%, #f8f8f9 40%, #f1f1f3 80%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton .skBig {
+  height: 20px;
+  margin-bottom: 6px;
+}
+
+.skeleton .skAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+.skGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  max-width: 460px;
+  margin-top: 14px;
+}
+
+.skGrid b {
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+
+/* if Cal.com can't load: a short note and the link, over the placeholder */
+.failed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  background: rgb(255 255 255 / 0.85);
+  font-size: 14px;
+  color: rgb(12 12 13 / 0.6);
+  animation: contentIn 0.5s var(--ease);
+}
+
+.failed p {
+  margin: 0;
+}
+
+.failed a {
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.body[data-failed] .skeleton i,
+.body[data-failed] .skeleton b {
+  animation: none;
+}
+
+/* phones: nearly full screen; the calendar fills the panel */
+@media (max-width: 560px) {
+  .dialog {
+    --pad-y: 10px;
+    padding: 10px;
+  }
+
+  .stack {
+    height: calc(100dvh - 20px);
+    gap: 8px;
+  }
+
+  .panel {
+    flex: 1;
+    border-radius: 20px;
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .skSide {
+    display: none;
+  }
+
+  .skeleton {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- keyframes ---------- */
+@keyframes backdropIn {
+  from {
+    background: rgb(12 12 13 / 0);
+    backdrop-filter: blur(0) saturate(1);
+    -webkit-backdrop-filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes backdropOut {
+  to {
+    background: rgb(12 12 13 / 0);
+    backdrop-filter: blur(0) saturate(1);
+    -webkit-backdrop-filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.97);
+  }
+}
+
+@keyframes sheetOut {
+  to {
+    opacity: 0;
+    transform: translateY(32px) scale(0.98);
+  }
+}
+
+@keyframes contentIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog::backdrop,
+  .stack,
+  .body,
+  .failed,
+  .skeleton i,
+  .skeleton b {
+    animation: none;
+  }
+
+  .close {
+    transition: none;
+  }
+
+  .close:hover {
+    transform: none;
+  }
+}

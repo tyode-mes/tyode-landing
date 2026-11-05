@@ -1,0 +1,462 @@
+/* "Get in touch" pop-up: same backdrop, Apple-style rise and floating close button as the
+   booking pop-up (components/booking), holding a short contact form. */
+.dialog {
+  --ink: #0c0c0d;
+  --ink-2: rgb(12 12 13 / 0.55);
+  --field: #f4f4f5;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --sheet: cubic-bezier(0.32, 0.72, 0, 1); /* Apple's sheet curve */
+  --pad-y: clamp(16px, 4vh, 40px);
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: var(--pad-y) clamp(12px, 3vw, 32px);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-inter, "Inter"), system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialog::backdrop {
+  background: rgb(12 12 13 / 0.45);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  animation: backdropIn 0.7s var(--sheet);
+}
+
+.dialog[data-closing]::backdrop {
+  animation: backdropOut 0.45s var(--sheet) forwards;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 2 * var(--pad-y));
+  animation: sheetIn 0.8s var(--sheet) 0.05s backwards;
+}
+
+.dialog[data-closing] .stack {
+  animation: sheetOut 0.45s var(--sheet) forwards;
+}
+
+.panel {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.6),
+    0 50px 100px -30px rgb(0 0 0 / 0.5);
+}
+
+/* round white close button, floating above the panel's top-right corner */
+.close {
+  align-self: flex-end;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 6px 20px -6px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.5s var(--ease);
+}
+
+.close:hover {
+  background: #fff;
+  transform: rotate(90deg);
+}
+
+.close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.close span,
+.close span::after {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+.close span::after {
+  content: "";
+  transform: rotate(90deg);
+}
+
+/* ---------- the form ---------- */
+.form {
+  display: grid;
+  gap: 16px;
+  padding: clamp(26px, 5vw, 40px);
+  transition: opacity 0.4s ease, transform 0.6s var(--sheet), filter 0.4s ease;
+}
+
+/* fields settle in one after another, just after the panel */
+.form > * {
+  animation: contentIn 0.8s var(--sheet) backwards;
+}
+
+.form > :nth-child(1) { animation-delay: 0.12s; }
+.form > :nth-child(2) { animation-delay: 0.18s; }
+.form > :nth-child(3) { animation-delay: 0.22s; }
+.form > :nth-child(4) { animation-delay: 0.26s; }
+.form > :nth-child(n + 5) { animation-delay: 0.3s; }
+
+.head {
+  margin-bottom: 6px;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+/* same soft grey gradient as the section titles on the page */
+.title span {
+  background: linear-gradient(180deg, #5b5b60, #9a9aa0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lede {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field > span {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.field em {
+  margin-left: 4px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.field textarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgb(12 12 13 / 0.35);
+}
+
+.field input:hover,
+.field textarea:hover {
+  background: #efeff1;
+}
+
+/* focused: turns white with a crisp dark edge and a soft halo */
+.field input:focus,
+.field textarea:focus {
+  background: #fff;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 4px rgb(12 12 13 / 0.08);
+}
+
+/* only flags a field after the visitor has tried it, not on load */
+.field input:user-invalid,
+.field textarea:user-invalid {
+  border-color: #d33a2c;
+  box-shadow: 0 0 0 4px rgb(211 58 44 / 0.1);
+}
+
+.trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* black pill button */
+.send {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.4s var(--ease);
+}
+
+.send:hover:not(:disabled) {
+  background: #2a2a2e;
+}
+
+.send:hover:not(:disabled) span {
+  transform: translateX(3px);
+}
+
+.send span {
+  transition: transform 0.4s var(--ease);
+}
+
+.send:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.send:disabled {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.send:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.note {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.note a {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgb(12 12 13 / 0.25);
+  transition: text-decoration-color 0.3s ease;
+}
+
+.note a:hover {
+  text-decoration-color: var(--ink);
+}
+
+.error {
+  color: #c0392b;
+}
+
+/* ---------- thank-you ---------- */
+/* the form drifts back and softens away; the thank-you rises in over it */
+.panel[data-sent] .form {
+  opacity: 0;
+  filter: blur(6px);
+  transform: scale(0.97);
+  pointer-events: none;
+}
+
+.done {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 40px;
+  text-align: center;
+}
+
+.done > * {
+  animation: contentIn 0.8s var(--sheet) backwards;
+}
+
+.done > :nth-child(2) { animation-delay: 0.35s; }
+.done > :nth-child(3) { animation-delay: 0.45s; }
+.done > :nth-child(4) { animation-delay: 0.55s; }
+
+.done .send {
+  width: auto;
+  margin-top: 22px;
+  padding: 0 36px;
+}
+
+/* the tick: the circle draws round, then the check draws through */
+.tick {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 18px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tick circle,
+.tick path {
+  stroke-dasharray: 1;
+}
+
+.tick circle {
+  stroke: rgb(12 12 13 / 0.15);
+  animation: draw 0.7s var(--ease) 0.1s backwards;
+}
+
+.tick path {
+  stroke-width: 2.5;
+  animation: draw 0.5s var(--ease) 0.45s backwards;
+}
+
+/* phones: fields stack */
+@media (max-width: 520px) {
+  .dialog {
+    --pad-y: 10px;
+    padding: 10px;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- keyframes ---------- */
+@keyframes backdropIn {
+  from {
+    background: rgb(12 12 13 / 0);
+    backdrop-filter: blur(0) saturate(1);
+    -webkit-backdrop-filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes backdropOut {
+  to {
+    background: rgb(12 12 13 / 0);
+    backdrop-filter: blur(0) saturate(1);
+    -webkit-backdrop-filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.97);
+  }
+}
+
+@keyframes sheetOut {
+  to {
+    opacity: 0;
+    transform: translateY(32px) scale(0.98);
+  }
+}
+
+@keyframes contentIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog::backdrop,
+  .stack,
+  .form > *,
+  .done > *,
+  .tick circle,
+  .tick path {
+    animation: none;
+  }
+
+  .form,
+  .close,
+  .send,
+  .send span {
+    transition: none;
+  }
+
+  .close:hover {
+    transform: none;
+  }
+}
