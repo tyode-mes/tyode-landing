@@ -15,8 +15,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tyode — process intelligence for solid tyres",  description:
-    "Volumetric inspection, AI surface grading and a Digital Passport for every solid tyre — from green tyre to finished unit.",
+  title: "Tyode - Process Intelligence for Solid Tyres",  description:
+    "A complete digital passport and process intelligence platform for every solid tyre — tracing materials, logging cures, and explaining defects from compound batch to export container."
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,93 +1,182 @@
 /* ---------- Team ---------- */
-/* Set like film credits on the site's grey: centred, role in small capitals, the name large,
-   a small avatar beside it. */
+/* Clean credits on the site's grey: role in small capitals, name, links. One gentle reveal. */
+.team::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: clamp(40px, 8vh, 90px);
+  width: min(1000px, 120vw);
+  aspect-ratio: 2 / 1;
+  transform: translateX(-50%) scale(0.85);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.6s var(--ease), transform 2s var(--ease);
+}
+.team:has(.head.in)::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+.team > * {
+  position: relative;
+}
+.team::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: rgb(236 236 237 / 0.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 100%);
+  transition: opacity 1.6s var(--ease) 0.1s, -webkit-backdrop-filter 1.6s var(--ease) 0.1s, backdrop-filter 1.6s var(--ease) 0.1s;
+}
+.team:has(.head.in)::after {
+  opacity: 0;
+  -webkit-backdrop-filter: blur(0) saturate(1);
+  backdrop-filter: blur(0) saturate(1);
+}
 .team {
+  position: relative;
+  overflow: hidden;
   --gut: clamp(20px, 4vw, 56px);
   --ink: #0c0c0d;
   --ink-2: rgb(12 12 13 / 0.6);
   --ink-3: rgb(12 12 13 / 0.4);
-  padding: clamp(100px, 16vh, 180px) var(--gut);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  padding: clamp(100px, 16vh, 170px) var(--gut);
   background: #ececed;
   color: var(--ink);
   text-align: center;
+  font-family: var(--font-inter, "Inter"), system-ui, sans-serif;
 }
 
+.head {
+  margin: 0 auto clamp(56px, 10vh, 100px);
+}
 .kicker {
-  margin: 0 0 16px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ink-2);
 }
-
 .heading {
-  margin: 0 0 clamp(56px, 10vh, 112px);
-  font-size: clamp(2rem, 3.6vw, 4rem);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
+  margin: 12px 0 0;
+  font-size: clamp(2.2rem, 4.6vw, 4.4rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+.ln {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
+}
+.ln > span {
+  display: block;
+  transform: translateY(105%);
+  filter: blur(6px);
+  transition: transform 1.2s var(--ease), filter 1.2s var(--ease);
+}
+.ln + .ln > span {
+  transition-delay: 0.1s;
+  color: #8a8a90;
+}
+.in .ln > span {
+  transform: none;
+  filter: none;
 }
 
-/* three a row, the last row centred */
+/* three a row, last row centred */
 .credits {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: clamp(48px, 8vh, 80px) 0;
+  gap: clamp(44px, 7vh, 72px) 0;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
   list-style: none;
 }
-
 .credit {
   display: grid;
   justify-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 0 0 33.333%;
+  box-sizing: border-box;
   padding: 0 16px;
+  --d: calc(0.15s + var(--i, 0) * 0.09s);
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
+  transition:
+    opacity 1s var(--ease) var(--d),
+    transform 1.2s var(--ease) var(--d),
+    filter 1s var(--ease) var(--d);
+}
+.credit.in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.credit .avatar {
+  transform: scale(0.6);
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--d) + 0.25s);
+}
+.credit.in .avatar {
+  transform: none;
+}
+.credit .links {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.8s var(--ease) calc(var(--d) + 0.4s), transform 0.8s var(--ease) calc(var(--d) + 0.4s);
+}
+.credit.in .links {
+  opacity: 1;
+  transform: none;
 }
 
 .role {
   margin: 0;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-
 .name {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   margin: 0;
-  font-size: clamp(1.4rem, 2.1vw, 2.2rem);
-  font-weight: 500;
+  font-size: clamp(1.3rem, 1.85vw, 2rem);
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.1;
+  white-space: nowrap;
 }
-
 .avatar {
   display: grid;
   place-items: center;
   flex: none;
-  width: 1.15em;
-  height: 1.15em;
+  width: 1.2em;
+  height: 1.2em;
   border-radius: 50%;
   overflow: hidden;
   background: #fff;
+  box-shadow: 0 6px 18px -10px rgb(0 0 0 / 0.3);
 }
-
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .avatar span {
-  font-size: 0.36em;
+  font-size: 0.34em;
   font-weight: 600;
   letter-spacing: 0;
   color: var(--ink-3);
@@ -97,7 +186,6 @@
   display: flex;
   gap: 2px;
 }
-
 .links a {
   display: grid;
   place-items: center;
@@ -105,17 +193,13 @@
   height: 32px;
   border-radius: 8px;
   color: rgb(12 12 13 / 0.42);
-  transition:
-    color 0.2s ease,
-    background 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
-
 .links a:hover,
 .links a:focus-visible {
   color: var(--ink);
-  background: rgb(12 12 13 / 0.06);
+  background: rgb(255 255 255 / 0.7);
 }
-
 .links svg {
   width: 15px;
   height: 15px;
@@ -123,20 +207,50 @@
 }
 
 .note {
-  margin: clamp(56px, 10vh, 112px) 0 0;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 1s var(--ease) 0.3s;
+  margin: clamp(56px, 10vh, 100px) auto 0;
+  max-width: 60ch;
   font-size: 12.5px;
   color: var(--ink-3);
 }
 
-/* ---------- Smaller screens ---------- */
+.note.in {
+  opacity: 1;
+}
+
 @media (max-width: 900px) {
   .credit {
     flex-basis: 50%;
   }
 }
-
 @media (max-width: 560px) {
   .credit {
     flex-basis: 100%;
+  }
+  .name,
+  .note {
+    white-space: normal;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .credit,
+  .credit .avatar,
+  .credit .links,
+  .ln > span,
+  .note,
+  .team::before,
+  .team::after {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+  .team::before {
+    transform: translateX(-50%);
+  }
+  .team::after {
+    display: none;
   }
 }
