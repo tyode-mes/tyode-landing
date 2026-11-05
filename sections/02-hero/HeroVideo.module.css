@@ -92,8 +92,10 @@
   opacity: calc(1 - var(--p) * 2.5);
 }
 
-/* With 3D on, "Pre-cure · Surface · Traceability" is printed inside the white band instead */
-.stage[data-mode="gl"] .pill {
+/* Only shown with the plain-video fallback: with 3D on, the same words are printed inside the
+   white band instead. Hidden until the script has picked a mode, so it can't flash on the
+   first frame before the 3D scene takes over. */
+.stage:not([data-mode="fallback"]) .pill {
   display: none;
 }
 
