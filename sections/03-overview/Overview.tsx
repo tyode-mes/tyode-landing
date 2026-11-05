@@ -1,17 +1,26 @@
-import SectionPlaceholder from "@/components/SectionPlaceholder";
+"use client";
 
-/**
- * Section 03: Overview
- * Placeholder — replace this with the real section. Keep id="overview" on the outer <section>:
- * the nav links to it. Put styles in a Overview.module.css next to this file.
- */
+import { useEffect, useRef } from "react";
+import { OVERVIEW_MARKUP } from "./markup";
+import { initOverview } from "./initOverview";
+
+/* Section 03, overview: process intelligence for solid tyres, who it serves, and how it fits the plant floor.
+   Styles live in ./overview.css, imported once in app/layout.tsx. */
 export default function Overview() {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    return initOverview(ref.current);
+  }, []);
+
   return (
-    <SectionPlaceholder
+    <section
+      ref={ref}
+      className="ov"
       id="overview"
-      number="03"
-      title="Overview"
-      brief={["What this section should cover goes here"]}
+      aria-labelledby="ov-title"
+      dangerouslySetInnerHTML={{ __html: OVERVIEW_MARKUP }}
     />
   );
 }

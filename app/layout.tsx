@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "../sections/05-features/features.css";
 import "../sections/04-how-it-works/how-it-works.css";
+import "../sections/03-overview/overview.css";
 
 
 const inter = Inter({
