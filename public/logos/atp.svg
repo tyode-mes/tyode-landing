@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 12 178 120" role="img" aria-label="Agile Team Project">
+  <title>Agile Team Project</title>
+  <g fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">
+    <!-- A (open lambda) -->
+    <path fill-rule="evenodd" d="M5.5 102 L36.2 17.5 H42.8 L73.5 102 H55.5 L39.5 55 L23.7 102 Z"/>
+    <!-- T -->
+    <path d="M57.5 17.5 H109 V31 H57.5 Z"/>
+    <path d="M75 48.8 H91 V102 H75 Z"/>
+    <!-- P -->
+    <path fill-rule="evenodd" d="M114.5 17.5 H145.2 A27.25 27.25 0 0 1 145.2 72 H130 V102 H114.5 Z M130 33 V53.8 H145 A10.4 10.4 0 0 0 145 33 Z"/>
+  </g>
+  <g fill="currentColor" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="7.4" letter-spacing="3.75" text-anchor="middle">
+    <text x="89" y="114.6">AGILE TEAM PROJECT</text>
+    <text x="89" y="128.6">WWW.SDGP.LK</text>
+  </g>
+</svg>

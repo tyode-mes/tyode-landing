@@ -6,6 +6,8 @@ import "../sections/04-how-it-works/how-it-works.css";
 import "../sections/03-overview/overview.css";
 
 
+
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -13,8 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tyode — pre-cure inspection and traceability for solid tyres",
-  description:
+  title: "Tyode — process intelligence for solid tyres",  description:
     "Volumetric inspection, AI surface grading and a Digital Passport for every solid tyre — from green tyre to finished unit.",
 };
 

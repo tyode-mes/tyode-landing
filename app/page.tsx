@@ -6,9 +6,10 @@ import Hero from "@/sections/02-hero/Hero";
 import Overview from "@/sections/03-overview/Overview";
 import HowItWorks from "@/sections/04-how-it-works/HowItWorks";
 import Features from "@/sections/05-features/Features";
-import Impact from "@/sections/06-impact/Impact";
 import Team from "@/sections/07-team/Team";
 import Footer from "@/sections/08-footer/Footer";
+import Partners from "@/sections/06-partners/Partners";
+
 
 export default function Home() {
   return (
@@ -17,9 +18,9 @@ export default function Home() {
       <main>
         <Hero />
         <Overview />
+        <Partners />
         <HowItWorks />
         <Features />
-        <Impact />
         <Team />
       </main>
       <Footer />
