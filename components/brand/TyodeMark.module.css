@@ -87,20 +87,11 @@
 }
 
 /* ---------- Letters and tyre ---------- */
+/* the whole wordmark, letters and tyre together, rises into place out of a blur in one go */
 .ink {
   fill: currentColor;
   fill-rule: evenodd;
-}
-
-.letter {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: letterIn 0.7s var(--ease) var(--d) backwards;
-}
-
-.tyre {
-  transform-box: view-box;
-  animation: tyreIn 1.3s cubic-bezier(0.2, 0.9, 0.25, 1.08) var(--d) backwards;
+  animation: blurRise 0.75s var(--ease) 0.2s backwards;
 }
 
 /* ---------- Inspection line ---------- */
@@ -146,20 +137,13 @@
   }
 }
 
-@keyframes letterIn {
+/* Clean, modern entrance: out of a soft blur, transparent, rising from just below into place.
+   Lengths are in logo units (on the giant footer logo that's roughly 2.5 screen pixels each). */
+@keyframes blurRise {
   from {
     opacity: 0;
-    transform: translateY(9%) scaleY(0.96);
-  }
-}
-
-@keyframes tyreIn {
-  from {
-    opacity: 0;
-    transform: translateX(-26px) rotate(-150deg) scale(0.55);
-  }
-  40% {
-    opacity: 1;
+    filter: blur(7px);
+    transform: translateY(20px);
   }
 }
 

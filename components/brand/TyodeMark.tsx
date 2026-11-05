@@ -7,12 +7,11 @@ import styles from "./TyodeMark.module.css";
  * layer on top of them (a thin translucent grey, so it reads darker on the paper and lighter
  * where it crosses the ink). Every guide below is measured from the artwork, in logo units.
  *
- * Intro (plays once): the guides draw themselves in, an inspection line sweeps across, each
- * letter appears as it passes and the tyre spins into place. A parent can hold it with
+ * Intro (plays once): the guides draw themselves in, the whole wordmark rises into place out of
+ * a soft blur in one go, and an inspection line sweeps across it. A parent can hold it with
  * `animation-play-state: paused` until it is ready to be seen. Reduced motion: final state.
  */
 
-const [TX, TY] = LOGO.tyreCentre;
 
 // ---- construction, measured from the artwork ----
 const D = { x: 315.35, y: 66.65 }; // centre of the d's bowl
@@ -46,12 +45,11 @@ const D_ARC = arc(D.x, D.y, 47.1, -113.3, 92); // round the bowl of the d, from 
 const TYRE_ARC = arc(229.55, 69.35, 61.6, 34.5, 98.6); // under the tyre
 
 // ---- intro timing ----
-// When the inspection line passes x (logo units), in seconds
-const SCAN_START = 0.55;
-const SCAN_DUR = 1.25;
+// the inspection line's sweep across the logo, in seconds
+const SCAN_START = 0.3;
+const SCAN_DUR = 0.95;
 const SCAN_FROM = LEFT;
 const SCAN_TO = RIGHT;
-const passes = (x: number) => SCAN_START + ((x - SCAN_FROM) / (SCAN_TO - SCAN_FROM)) * SCAN_DUR;
 
 const v = (s: number, d: number) => ({ "--s": s, "--d": `${d.toFixed(2)}s` }) as CSSProperties;
 
@@ -68,15 +66,11 @@ export default function TyodeMark({ pad, className, settle }: Props) {
     <svg className={`${styles.mark} ${settle ? styles.settle : ""} ${className ?? ""}`} viewBox={vb} aria-hidden="true" overflow="visible">
       {/* ---- the logo ---- */}
       <g className={styles.ink}>
-        <path className={styles.letter} style={v(1, passes(37))} d={LOGO.parts.t} />
-        <path className={styles.letter} style={v(1, passes(128))} d={LOGO.parts.y} />
-        <path className={styles.letter} style={v(1, passes(D.x))} d={LOGO.parts.d} />
-        <path className={styles.letter} style={v(1, passes(414))} d={LOGO.parts.e} />
-        <path
-          className={styles.tyre}
-          style={{ ...v(1, passes(TX) - 0.15), transformOrigin: `${TX}px ${TY}px` }}
-          d={LOGO.parts.tyre}
-        />
+        <path d={LOGO.parts.t} />
+        <path d={LOGO.parts.y} />
+        <path d={LOGO.parts.d} />
+        <path d={LOGO.parts.e} />
+        <path d={LOGO.parts.tyre} />
       </g>
 
       {/* ---- construction, on top ---- */}
