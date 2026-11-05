@@ -16,6 +16,21 @@
   color: #fff;
 }
 
+/* load entrance: eases down into place as the hero fades in (HeroVideo.module.css); its
+   logo draws itself in as it arrives */
+@media (prefers-reduced-motion: no-preference) {
+  .nav {
+    animation: navIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
+  }
+}
+
+@keyframes navIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+}
+
 
 .bar {
   position: relative;

@@ -73,8 +73,8 @@ const HOVER_FADE_IN = 1.6;
 const BACKDROP = { color: [0.82, 0.82, 0.824], floor: 0.045, pool: 0.03, falloff: 0.05 };
 /** How strongly the depth pushes parts toward the camera (more = more 3D, more edge stretch) */
 const DEPTH = 0.36;
-/** The tyre's layers, named along the rule under the band (left to right) */
-const LAYERS = ["Tread", "Cushion", "Base", "Bead wire", "Rim band"];
+/** The tyre's journey on its passport, named along the rule under the band (left to right) */
+const LAYERS = ["Batch", "Build", "Cure", "Check", "Ship", "Claim"];
 /** The band and the hero text are sized from this (css px): a share of the screen width, clamped */
 const SCALE = { share: 0.19, min: 80, max: 288 };
 /**
@@ -90,7 +90,7 @@ const BAND = {
   opacity: 1,
   parallax: 0.35,
   // fine print printed inside the band (behind the machine, like the band itself)
-  label: "Pre-cure · Surface · Traceability",
+  label: "Trace · Check · Explain",
   labelSize: 12.5, // css px
   labelX: 0.635, // where it starts, share of the screen width
 };
@@ -1267,9 +1267,11 @@ export default function HeroVideo({
     let firstFrameAt = 0;
     let wasVisible = true;
     let frameMs = 16.7; // smoothed frame time, drives the automatic resolution
+    let refreshMs = 16.7; // the screen's refresh interval, learned from the fastest frames
     let lastAdjust = 0;
     let lastDrop = -10;
     let cssP = "", cssX = "", cssY = "";
+    let captionOn = false;
 
     // Performance readout: add ?debug=1 to the URL
     const debug = new URLSearchParams(window.location.search).get("debug") === "1";
@@ -1344,7 +1346,7 @@ export default function HeroVideo({
         } else {
           // Ease towards the target, but never faster than ~3 screens a second, so a hard
           // flick turns into a quick, smooth sweep instead of a jump
-          const step = (wheelTarget - wheelY) * (1 - Math.exp(-dt * 9));
+          const step = (wheelTarget - wheelY) * (1 - Math.exp(-dt * 14));
           const maxStep = vh * 3 * dt;
           wheelY += clamp(step, -maxStep, maxStep);
           if (Math.abs(wheelTarget - wheelY) < 0.3 && now - lastWheel > 160) {
@@ -1375,15 +1377,20 @@ export default function HeroVideo({
       }
       wasVisible = true;
 
-      // Automatic resolution: drop quality quickly when frames are slow, raise it slowly
+      // Automatic resolution: drop quality as soon as frames come noticeably slower than the
+      // screen refreshes, raise it again once there is headroom. The refresh interval is
+      // learned from the fastest frames (60/120/144 Hz all work). The first seconds after the
+      // first frame are ignored: loading hitches there say nothing about how heavy the scene is.
       if (rawMs < 250) frameMs += (rawMs - frameMs) * 0.08;
-      if (hasFrame && t - lastAdjust > 0.6) {
+      if (rawMs > 5 && rawMs < 50)
+        refreshMs = Math.min(17.5, refreshMs + (rawMs - refreshMs) * (rawMs < refreshMs ? 0.05 : 0.002));
+      if (hasFrame && t - firstFrameAt > 2.5 && t - lastAdjust > 0.6) {
         lastAdjust = t;
-        if (frameMs > 24 && scale > MIN_SCALE) {
+        if (frameMs > Math.max(refreshMs * 1.35, 13) && scale > MIN_SCALE) {
           scale = Math.max(MIN_SCALE, scale * 0.85);
           lastDrop = t;
           resizeScene();
-        } else if (frameMs < 17 && scale < scaleCap && t - lastDrop > 8) {
+        } else if (frameMs < refreshMs * 1.1 && scale < scaleCap && t - lastDrop > 5) {
           scale = Math.min(scaleCap, scale * 1.07);
           resizeScene();
         }
@@ -1397,7 +1404,8 @@ export default function HeroVideo({
       exitS += (exitTarget - exitS) * (1 - Math.exp(-dt * 11));
       const exitE = 1 - Math.pow(1 - smooth(0, 1, exitS), 2); // settles softly at the top
       const progBefore = prog;
-      prog += (target - prog) * (1 - Math.exp(-dt * 11));
+      // (kept fairly quick: the wheel glide above already smooths mouse wheels)
+      prog += (target - prog) * (1 - Math.exp(-dt * 18));
       // Scroll speed in screens/second, measured from the smoothed position (raw scroll
       // positions jump in whole pixels and uneven steps, which made the effects twitch)
       const instVel = dt > 0 ? ((prog - progBefore) / dt) * (breakPx / vh) : 0;
@@ -1419,7 +1427,7 @@ export default function HeroVideo({
 
       // ---- Video: scroll breaks the tyre apart ----
       const eTarget = smooth(0, 0.72, target);
-      const stiff = 70;
+      const stiff = 130; // spring towards the scroll position: higher = follows more closely
       eV += ((eTarget - eS) * stiff - eV * 2 * Math.sqrt(stiff)) * dt;
       // At most ~80 video frames a second when seeking, however hard the flick: the video keeps up and
       // the motion stays fluid instead of skipping
@@ -1968,6 +1976,14 @@ export default function HeroVideo({
       if (p3 !== cssP) stage.style.setProperty("--p", (cssP = p3));
       if (x3 !== cssX) stage.style.setProperty("--mx", (cssX = x3));
       if (y3 !== cssY) stage.style.setProperty("--my", (cssY = y3));
+      // The mid-scroll caption blends with the scene (mix-blend-mode), which costs a full
+      // extra compositing pass every frame: switch it on only while it can be seen
+      const capOn = prog > 0.4 && prog < 0.99;
+      if (capOn !== captionOn) {
+        captionOn = capOn;
+        if (capOn) stage.dataset.caption = "";
+        else delete stage.dataset.caption;
+      }
     };
     raf = requestAnimationFrame(frame);
 
@@ -2037,24 +2053,24 @@ export default function HeroVideo({
 
         <div className={styles.overlay}>
           <div className={styles.topRow}>
-            <span className={styles.pill}>Pre-cure · Surface · Traceability</span>
+            <span className={styles.pill}>Trace · Check · Explain</span>
           </div>
 
           {/* Under the band: a line, a few words on the system, and a rule marked with the
-              tyre's layers; its marker moves through them as you scroll */}
+              stages on a tyre's passport; its marker moves through them as you scroll */}
           <div className={styles.sub}>
             <p className={styles.lead}>
               <span className={styles.line}>
-                <span>Built in layers.</span>
+                <span>One passport.</span>
               </span>
               <span className={styles.line}>
-                <span>Checked in layers.</span>
+                <span>Every solid tyre.</span>
               </span>
             </p>
             <p className={styles.body}>
-              Pre-cure volumetric–gravimetric inspection for solid tyres. Each layer is weighed and
-              measured as it&apos;s built, before the press, so a fault is caught while it can still be
-              fixed.
+              A digital passport that follows each solid tyre from compound batch to export
+              container, keeps its quality results and helps explain why a tyre failed, all
+              without interrupting production.
             </p>
             <div className={styles.layers} aria-hidden="true">
               <span className={styles.rule}>
@@ -2072,9 +2088,9 @@ export default function HeroVideo({
 
           {/* Fades in mid-scroll, top-left */}
           <h1 className={styles.caption}>
-            Every layer measured.
-            <br />
             Every tyre traced.
+            <br />
+            Every fault explained.
           </h1>
 
         </div>

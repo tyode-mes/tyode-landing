@@ -91,7 +91,7 @@ export default function SiteNav() {
               <TyodeMark pad={PAD} settle />
             </span>
           </a>
-          <span className={styles.tag}>Pre-cure inspection</span>
+          <span className={styles.tag}>Solid Tyre Passport</span>
         </div>
 
         <nav className={styles.links} aria-label="Main" onPointerLeave={() => setPill(null)}>
