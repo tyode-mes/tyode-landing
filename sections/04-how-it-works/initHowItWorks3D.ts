@@ -226,7 +226,11 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
       }
       v.copy(anchor).project(camera);
       const x = (v.x * 0.5 + 0.5) * w, y = (-v.y * 0.5 + 0.5) * h;
-      el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      /* flip a label to the left of its dot when it would run off the right edge (phones) */
+      const flip = x + el.offsetWidth > w - 12;
+      el.classList.toggle("flip", flip);
+      const tx = flip ? x - el.offsetWidth : x;
+      el.style.transform = `translate3d(${tx.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
       el.classList.toggle("on", show.has(k));
     });
   }
@@ -240,7 +244,7 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     /* frame the tyre right of centre on wide screens (copy sits left), and high on phones (copy sits below) */
     const w = Math.round(r.width), h = Math.round(r.height);
     if (camera.aspect >= 1.2) camera.setViewOffset(w, h, -Math.round(w * 0.1), -Math.round(h * 0.03), w, h);
-    else camera.setViewOffset(w, h, Math.round(w * 0.12), Math.round(h * 0.17), w, h);
+    else camera.setViewOffset(w, h, -Math.round(w * 0.03), Math.round(h * (h < 720 ? 0.15 : 0.1)), w, h);
     camera.updateProjectionMatrix();
   }
 
@@ -315,7 +319,7 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     root.position.set(0, 0, 0); root.updateMatrixWorld(true);
     const bw = gBand.getWorldPosition(new THREE.Vector3());
     root.position.set(-bw.x * cur.focus, 0, -bw.z * cur.focus);
-    const near = camera.aspect < 0.8 ? 1.5 : camera.aspect < 1.2 ? 1.18 : 1;
+    const near = camera.aspect < 0.8 ? 1.3 : camera.aspect < 1.2 ? 1.18 : 1;
     camera.position.set(0, 0.35 + cur.pitch * 1.6, cur.dist * 1.55 * near);
     camera.lookAt(0, 0, 0);
     glow.quaternion.copy(camera.quaternion);
