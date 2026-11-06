@@ -135,17 +135,22 @@
 /* tablets and phones: tyre on top, copy below, compact passport */
 @media (max-width:900px){
   .h3 .h3-seg span{display:none}
-  .h3 .h3-copy{width:auto;right:clamp(20px,4vw,64px);height:240px;bottom:112px}
+  .h3 .h3-copy{width:auto;right:clamp(20px,4vw,64px);height:240px;bottom:132px}
   .h3 .h3-item p{font-size:14.5px}
   .h3 .h3-item dl{display:none}
   .h3 .h3-pass{left:clamp(20px,4vw,64px);right:clamp(20px,4vw,64px);width:auto;bottom:40px;padding:10px 16px}
-  .h3 .h3-pass ol{display:none}
+  .h3 .h3-pass ol{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
+  .h3 .h3-pass li{display:none;padding:0;border:0}
+  .h3 .h3-pass li.now{display:flex}
+  .h3 .h3-pass li.now::before{display:none}
   .h3 .h3-pass-head{border-bottom:0;padding:0}
-  .h3 .h3-tag div{padding:5px 9px;white-space:normal;max-width:min(210px,56vw)}
+  .h3 .h3-tag div{padding:5px 9px;white-space:normal;max-width:min(190px,48vw)}
   .h3 .h3-tag b{font-size:11px}.h3 .h3-tag em{display:none}
   .h3 .h3-tag span{width:22px}
   .h3 .h3-note{display:none}
 }
+/* very short phone screens: the tyre is small, so drop the floating labels rather than stack them */
+@media (max-width:900px) and (max-height:620px){.h3 .h3-tag{display:none}}
 @media (prefers-reduced-motion:reduce){
   .h3 *,.h3 *::before,.h3 *::after{animation:none!important;transition:none!important}
   .h3 .h3-intro .ln > span{transform:none}.h3 .h3-intro p{opacity:1;transform:none}
