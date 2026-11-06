@@ -2059,14 +2059,15 @@ export default function HeroVideo({
           {/* Under the band: a line, a few words on the system, and a rule marked with the
               stages on a tyre's passport; its marker moves through them as you scroll */}
           <div className={styles.sub}>
-            <p className={styles.lead}>
+            {/* the page's main heading (h1): the headline visitors see first */}
+            <h1 className={styles.lead}>
               <span className={styles.line}>
                 <span>One passport.</span>
               </span>
               <span className={styles.line}>
                 <span>Every solid tyre.</span>
               </span>
-            </p>
+            </h1>
             <p className={styles.body}>
               A digital passport that follows each solid tyre from compound batch to export
               container, keeps its quality results and helps explain why a tyre failed, all
@@ -2087,11 +2088,11 @@ export default function HeroVideo({
           </div>
 
           {/* Fades in mid-scroll, top-left */}
-          <h1 className={styles.caption}>
+          <p className={styles.caption}>
             Every tyre traced.
             <br />
             Every fault explained.
-          </h1>
+          </p>
 
         </div>
 
