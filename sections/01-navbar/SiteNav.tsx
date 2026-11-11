@@ -20,6 +20,7 @@ const LINKS = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#features", label: "Features" },
   { href: "#team", label: "Team" },
+  { href: "/demo", label: "Live demo" },
 ];
 // opens the team's Cal.com booking calendar in a pop-up over the site (see components/booking)
 const CTA = { href: BOOKING_URL, label: "Book a walkthrough" };
