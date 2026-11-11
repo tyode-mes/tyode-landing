@@ -21,6 +21,7 @@ const LINKS = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#features", label: "Features" },
   { href: "#team", label: "Team" },
+  { href: "/demo", label: "Live demo" },
 ];
 
 /**
@@ -105,8 +106,6 @@ export default function Footer() {
             </div>
             <div className={styles.legal}>
               <span className={styles.copy}>© {YEAR} Tyode</span>
-              <a href="#">Terms of use</a>
-              <a href="#">Privacy policy</a>
             </div>
           </div>
 

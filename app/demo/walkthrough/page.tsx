@@ -1,4 +1,4 @@
-import CountingDemo from "../../counting/CountingDemo";
+import CountingDemo from "./CountingDemo";
 import { PageHead } from "../ui";
 
 export default function Walkthrough() {
