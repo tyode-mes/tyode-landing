@@ -21,7 +21,6 @@ const LINKS = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#features", label: "Features" },
   { href: "#team", label: "Team" },
-  { href: "/demo", label: "Live demo" },
 ];
 
 /**
@@ -29,6 +28,7 @@ const LINKS = [
  * height), then the small print, the site's sections, and the Tyode logo drawn huge across
  * the bottom and cut off by the edge of the page, construction lines and all. The logo's
  * intro plays when the footer comes into view.
+ * optimized
  */
 export default function Footer() {
   const giantRef = useRef<HTMLDivElement>(null);
@@ -106,6 +106,8 @@ export default function Footer() {
             </div>
             <div className={styles.legal}>
               <span className={styles.copy}>© {YEAR} Tyode</span>
+              <a href="#">Terms of use</a>
+              <a href="#">Privacy policy</a>
             </div>
           </div>
 
