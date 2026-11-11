@@ -20,7 +20,6 @@ const LINKS = [
   { href: "#overview", label: "Overview" },
   { href: "#how-it-works", label: "How it works" },
   { href: "#features", label: "Features" },
-  { href: "#impact", label: "Impact" },
   { href: "#team", label: "Team" },
 ];
 
