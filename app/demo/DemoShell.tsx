@@ -16,7 +16,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: string; 
   {
     group: "The floor",
     items: [
-      { href: "/demo", label: "Overview", icon: "overview", color: "#0a84ff" },
+      { href: "/demo", label: "Green tyre count", icon: "overview", color: "#0a84ff" },
       { href: "/demo/missing", label: "Missing tyres", icon: "missing", color: "#ff3b30", badge: missingCount },
       { href: "/demo/alerts", label: "Flagged attempts", icon: "flag", color: "#ff9500", badge: FLAGS.length },
     ],
@@ -88,6 +88,10 @@ export default function DemoShell({ children }: { children: React.ReactNode }) {
         <p className={s.sideNote}>
           <b>Read-only on machines.</b> Tyode reads signals and never changes machine settings.
         </p>
+        <div className={s.user}>
+          <i>PS</i>
+          <div><b>P. Silva</b><span>Production engineer · demo</span></div>
+        </div>
       </aside>
 
       <div className={s.mainCol}>
@@ -98,16 +102,17 @@ export default function DemoShell({ children }: { children: React.ReactNode }) {
             <option value="cure">Curing hall</option>
           </select>
           <form onSubmit={search} className={s.search} role="search">
-            <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a tyre by label, e.g. GT-2611-0120" aria-label="Find a tyre" />
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm9 16-4.2-4.2" /></svg>
+            <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a tyre label, e.g. GT-2611-0120" aria-label="Find a tyre" />
             <kbd>Ctrl K</kbd>
           </form>
           <div className={s.barRight}>
             <span className={`${s.shift} ${s.live}`}>Shift A · 06:00–14:00</span>
-            <span className={s.sim}>Simulated data</span>
+            <span className={s.sim}><i className={s.liveDot} />Simulated data</span>
             <Link href="/demo/walkthrough" className={s.start}>Start demo</Link>
           </div>
         </header>
-        <main className={s.content}><div className={s.glow} aria-hidden="true" />{children}</main>
+        <main className={s.content}>{children}</main>
       </div>
     </div>
   );

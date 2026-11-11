@@ -38,7 +38,7 @@ export function Icon({ name, color, size = 22 }: { name: string; color: string; 
   );
 }
 
-export function Kpi({ value, label, sub, tone, href, icon, color }: { value: string | number; label: string; sub?: string; tone?: "red" | "amber" | "green"; href?: string; icon?: string; color?: string }) {
+export function Kpi({ value, label, sub, tone, href, icon, color, filled }: { value: string | number; label: string; sub?: string; tone?: "red" | "amber" | "green"; href?: string; icon?: string; color?: string; filled?: boolean }) {
   const body = (
     <>
       {icon && color && <span className={s.kIcon}><Icon name={icon} color={color} size={30} /></span>}
@@ -47,7 +47,8 @@ export function Kpi({ value, label, sub, tone, href, icon, color }: { value: str
       {sub && <span className={s.kSub}>{sub}</span>}
     </>
   );
-  return href ? <Link href={href} className={`${s.kpi} ${s.kpiLink}`}>{body}</Link> : <div className={s.kpi}>{body}</div>;
+  const cls = `${s.kpi} ${filled ? s.kpiFilled : ""}`;
+  return href ? <Link href={href} className={`${cls} ${s.kpiLink}`}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
 export function Pill({ tone = "grey", children }: { tone?: "grey" | "green" | "amber" | "red" | "blue"; children: React.ReactNode }) {
