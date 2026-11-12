@@ -16,6 +16,7 @@ export default function Passport() {
     <>
       <PageHead title="Tyre passport" sub="The next phase. The same labels, scanners and server that make the count reliable become each tyre's complete history.">
         <Pill tone="blue">Next phase</Pill>
+        <Link href="/passport" className={s.start}>Open the passport demo</Link>
       </PageHead>
       <div className={s.gridTwo}>
         <Card title="What each tyre's record grows into">
@@ -33,7 +34,7 @@ export default function Passport() {
             <li><b>Was it cured properly?</b><span>Each tyre&apos;s cure record is checked against what its compound needs, and anything unusual is flagged.</span></li>
             <li><b>Why did this defect happen?</b><span>Defects are compared by batch, machine, press and shift, so engineers start from the likely cause.</span></li>
           </ul>
-          <p className={s.muted}>Built on the counting system, so nothing installed for counting is wasted. <Link href="/">See Tyode on tyode.com</Link></p>
+          <p className={s.muted}>Built on the counting system, so nothing installed for counting is wasted. <Link href="/passport">Follow one tyre through the passport demo</Link></p>
         </Card>
       </div>
     </>
