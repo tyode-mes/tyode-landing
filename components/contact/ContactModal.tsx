@@ -168,6 +168,11 @@ export default function ContactModal() {
                   <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" onClick={toBooking}>
                     Book a walkthrough
                   </a>
+                  <br />
+                  We only use your details to reply.{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                    Privacy policy
+                  </a>
                 </>
               )}
             </p>

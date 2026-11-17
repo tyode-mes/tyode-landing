@@ -106,8 +106,8 @@ export default function Footer() {
             </div>
             <div className={styles.legal}>
               <span className={styles.copy}>© {YEAR} Tyode</span>
-              <a href="#">Terms of use</a>
-              <a href="#">Privacy policy</a>
+              <a href="/terms">Terms of use</a>
+              <a href="/privacy">Privacy policy</a>
             </div>
           </div>
 
