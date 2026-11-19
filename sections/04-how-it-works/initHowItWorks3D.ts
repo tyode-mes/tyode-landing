@@ -1,16 +1,16 @@
 /* Section 04: a live 3D solid tyre, scroll-choreographed through the eight stages.
-   Studio lighting, real reflections on the steel band, exploded view, assembly, cure glow and a scan ring.
-   Runs once on mount and returns a cleanup function (safe under React Strict Mode). */
+   Driven by scrollBus (zero layout reads during scroll, cached tag widths, zero per-frame allocations,
+   auto-sleeps WebGL rAF completely when off-screen). */
 
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { scrollBus } from "@/lib/scrollBus";
 
 type Stage = {
   explode: number; rubber: number; band: number; dist: number; yaw: number; pitch: number; focus: number;
   heat: number; idGlow: number; labels: string[];
 };
 
-/* camera and tyre state for each stage; the build stage (3) scrubs explode 1 -> 0 with scroll */
 const STAGES: Stage[] = [
   { explode: 1.0, rubber: 0.12, band: 0.12, dist: 10.5, yaw: -0.75, pitch: 0.28, focus: 0, heat: 0, idGlow: 0, labels: [] },
   { explode: 1.0, rubber: 1.0, band: 0.14, dist: 10.5, yaw: -0.65, pitch: 0.26, focus: 0, heat: 0, idGlow: 0, labels: ["base", "cush", "tread"] },
@@ -24,7 +24,6 @@ const STAGES: Stage[] = [
 
 const CAPTIONS_N = STAGES.length;
 
-/* closed, rounded profile in (radius, axial) for LatheGeometry */
 function ringProfile(rin: number, rout: number, h: number, rad: number, seg = 6) {
   const pts: THREE.Vector2[] = [];
   const corners: [number, number, number, number][] = [
@@ -42,26 +41,24 @@ function ringProfile(rin: number, rout: number, h: number, rad: number, seg = 6)
   return pts;
 }
 
-/* the tyre ID, etched around the face of the steel band */
 function idTexture() {
-  const S = 2048, c = document.createElement("canvas");
+  const S = 1024, c = document.createElement("canvas");
   c.width = c.height = S;
   const g = c.getContext("2d")!;
   g.clearRect(0, 0, S, S);
   g.translate(S / 2, S / 2);
   g.fillStyle = "#ffffff";
-  g.font = "600 46px Inter, Helvetica, Arial, sans-serif";
+  g.font = "600 23px Inter, Helvetica, Arial, sans-serif";
   g.textBaseline = "middle";
   const R = (1.0 / 1.045) * (S / 2);
   const text = "P1-2611-00427";
   for (let rep = 0; rep < 3; rep++) {
     const start = rep * ((Math.PI * 2) / 3);
     let a = start;
-    /* small data-matrix block before each ID */
     g.save(); g.rotate(a); g.translate(0, -R);
     for (let r = 0; r < 6; r++) for (let q = 0; q < 6; q++) {
       const on = q === 0 || r === 5 || (r === 0 && q % 2 === 0) || (q === 5 && r % 2 === 1) || ((r * 7 + q * 3) % 5 < 2);
-      if (on) g.fillRect(-24 + q * 8, -24 + r * 8, 8, 8);
+      if (on) g.fillRect(-12 + q * 4, -12 + r * 4, 4, 4);
     }
     g.restore();
     a += 0.06;
@@ -70,12 +67,12 @@ function idTexture() {
       g.save(); g.rotate(a + w / 2 / R); g.translate(0, -R);
       g.fillText(ch, -w / 2, 0);
       g.restore();
-      a += (w + 6) / R;
+      a += (w + 3) / R;
     }
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
+  tex.anisotropy = 4;
   return tex;
 }
 
@@ -118,9 +115,12 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const N = CAPTIONS_N;
 
+  /* Set pinned scroll track height once before measuring */
+  scroll.style.height = N * 70 + 100 + "vh";
+
   /* ---------- renderer, scene, camera ---------- */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -140,10 +140,10 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   const root = new THREE.Group(); scene.add(root);
   const yaw = new THREE.Group(); root.add(yaw);
   const pitch = new THREE.Group(); yaw.add(pitch);
-  const tilt = new THREE.Group(); tilt.rotation.z = Math.PI / 2; pitch.add(tilt); /* tyre axis -> world X */
+  const tilt = new THREE.Group(); tilt.rotation.z = Math.PI / 2; pitch.add(tilt);
   const spin = new THREE.Group(); tilt.add(spin);
 
-  const SEG = 160;
+  const SEG = 96;
   const rubberMat = (hex: number) =>
     new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.82, metalness: 0, clearcoat: 0.12, clearcoatRoughness: 0.7, side: THREE.DoubleSide, emissive: 0xff7a2e, emissiveIntensity: 0 });
   const mats = { base: rubberMat(0x2c2c30), cush: rubberMat(0x232326), tread: rubberMat(0x161618) };
@@ -157,103 +157,135 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   gCush.add(new THREE.Mesh(new THREE.LatheGeometry(ringProfile(1.33, 1.62, 0.47, 0.02), SEG), mats.cush));
   gTread.add(new THREE.Mesh(new THREE.LatheGeometry(ringProfile(1.62, 1.86, 0.46, 0.09, 8), SEG), mats.tread));
 
-  /* tread lugs: staggered blocks around the crown */
   const LUGS = 64, lugGeo = new THREE.BoxGeometry(0.1, 0.34, 0.17);
   const lugs = new THREE.InstancedMesh(lugGeo, mats.tread, LUGS * 2);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1);
+  const yAxis = new THREE.Vector3(0, 1, 0);
   for (let i = 0; i < LUGS * 2; i++) {
     const side = i % 2 ? 1 : -1, th = (Math.floor(i / 2) + (side > 0 ? 0.5 : 0)) * ((Math.PI * 2) / LUGS);
     const R = 1.86 + 0.035;
     pos.set(R * Math.sin(th), side * 0.21, R * Math.cos(th));
-    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), th + Math.PI / 2);
+    q.setFromAxisAngle(yAxis, th + Math.PI / 2);
     m4.compose(pos, q, sc);
     lugs.setMatrixAt(i, m4);
   }
   gTread.add(lugs);
 
-  /* etched ID on the band face */
   const idTex = idTexture();
   const idMat = new THREE.MeshStandardMaterial({ map: idTex, transparent: true, metalness: 0.4, roughness: 0.4, emissive: 0xffffff, emissiveMap: idTex, emissiveIntensity: 0, depthWrite: false });
-  const idRing = new THREE.Mesh(new THREE.RingGeometry(0.955, 1.045, 180), idMat);
+  const idRing = new THREE.Mesh(new THREE.RingGeometry(0.955, 1.045, 120), idMat);
   idRing.rotation.x = -Math.PI / 2; idRing.position.y = 0.503;
   const idRing2 = idRing.clone(); idRing2.rotation.x = Math.PI / 2; idRing2.position.y = -0.503;
   gBand.add(idRing, idRing2);
 
-  /* scan ring for the quality check */
   const scanGroup = new THREE.Group(); tilt.add(scanGroup);
-  const scanCore = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.006, 8, 220), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
-  const scanGlow = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.03, 8, 220), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const scanCore = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.006, 8, 140), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+  const scanGlow = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.03, 8, 140), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
   [scanCore, scanGlow].forEach((m) => { m.rotation.x = Math.PI / 2; scanGroup.add(m); });
 
-  /* soft contact shadow */
-  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false, opacity: 0.5 }));
+  const shadowTex = shadowTexture();
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0.5 }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = -2.35; scene.add(shadow);
 
-  /* cure: warm halo behind the tyre */
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, depthWrite: false, opacity: 0 }));
+  const glowTex = glowTexture();
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, opacity: 0 }));
   glow.renderOrder = -1; scene.add(glow);
 
-  /* ---------- state ---------- */
+  /* ---------- state + cached bounds (zero layout reads in rAF / scroll) ---------- */
   const cur = { explode: 1, rubber: 0.12, band: 0.12, dist: 10.5, yaw: -0.75, pitch: 0.28, focus: 0, heat: 0, idGlow: 0, scan: -1 };
   const tgt = { ...cur };
-  let stage = -1, local = 0, stacked = false, visible = false, raf = 0, last = performance.now(), spinA = 0;
+  let stage = -1, local = 0, raf = 0, running = false, last = performance.now(), spinA = 0;
   let mx = 0, my = 0, smx = 0, smy = 0;
+  let scrollTop = 0, scrollHeight = 1, stageW = 1, stageH = 1, fit = 1;
+  let lastPStr = "";
+  const lastSegF = new Array<string>(N).fill("");
+  const tagWidths = new Map<string, number>();
+  const tagFlip = new Map<string, boolean>();
+  const tagOn = new Map<string, boolean>();
+
+  /* Reusable vectors/quats to avoid per-frame GC spikes */
+  const v = new THREE.Vector3();
+  const axis = new THREE.Vector3();
+  const up = new THREE.Vector3();
+  const right = new THREE.Vector3();
+  const tmpQuat = new THREE.Quaternion();
+  const tmpPos = new THREE.Vector3();
+  const tmpBandPos = new THREE.Vector3();
+  const tmpCamBack = new THREE.Vector3();
+
+  const centers: Record<string, THREE.Group> = { band: gBand, base: gBase, cush: gCush, tread: gTread };
+  const radii: Record<string, number> = { band: 1.0, base: 1.2, cush: 1.48, tread: 1.9 };
+  const fan: Record<string, number> = { tread: 0.15, cush: 0.55, base: 0.95, band: 1.35 };
 
   const setOpacity = (m: THREE.Material & { opacity: number }, o: number) => {
     m.opacity = o; m.transparent = o < 0.995; m.depthWrite = o > 0.5; m.visible = o > 0.01;
   };
 
-  /* label anchors: point on each ring, fanned from "up" so the tags never stack */
-  const centers: Record<string, THREE.Group> = { band: gBand, base: gBase, cush: gCush, tread: gTread };
-  const radii: Record<string, number> = { band: 1.0, base: 1.2, cush: 1.48, tread: 1.9 };
-  const fan: Record<string, number> = { tread: 0.15, cush: 0.55, base: 0.95, band: 1.35 };
-  const v = new THREE.Vector3(), axis = new THREE.Vector3(), up = new THREE.Vector3(), right = new THREE.Vector3();
-
-  function placeTags(w: number, h: number) {
-    axis.set(0, 1, 0).applyQuaternion(spin.getWorldQuaternion(new THREE.Quaternion())).normalize();
-    up.set(0, 1, 0).addScaledVector(axis, -axis.y).normalize();
-    right.crossVectors(up, axis).normalize();
-    if (right.x < 0) right.negate();
-    const show = new Set(STAGES[stage]?.labels ?? []);
+  function measureTagWidths() {
     tags.forEach((el, k) => {
-      let anchor: THREE.Vector3;
-      if (centers[k]) {
-        const c = centers[k].getWorldPosition(new THREE.Vector3());
-        const a = fan[k];
-        anchor = c.addScaledVector(up, Math.cos(a) * radii[k]).addScaledVector(right, Math.sin(a) * radii[k]);
-      } else {
-        anchor = gTread.getWorldPosition(new THREE.Vector3()).addScaledVector(up, 1.95).addScaledVector(right, 0.9);
-      }
-      v.copy(anchor).project(camera);
-      const x = (v.x * 0.5 + 0.5) * w, y = (-v.y * 0.5 + 0.5) * h;
-      /* flip a label to the left of its dot when it would run off the right edge (phones) */
-      const flip = x + el.offsetWidth > w - 12;
-      el.classList.toggle("flip", flip);
-      const tx = Math.max(8, flip ? x - el.offsetWidth : x);
-      el.style.transform = `translate3d(${tx.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      el.classList.toggle("on", show.has(k));
+      tagWidths.set(k, el.offsetWidth || 140);
     });
   }
 
-  let fit = 1;
-  function resize() {
+  function placeTags() {
+    const show = STAGES[stage]?.labels ?? [];
+    axis.set(0, 1, 0).applyQuaternion(spin.getWorldQuaternion(tmpQuat)).normalize();
+    up.set(0, 1, 0).addScaledVector(axis, -axis.y).normalize();
+    right.crossVectors(up, axis).normalize();
+    if (right.x < 0) right.negate();
+
+    tags.forEach((el, k) => {
+      const isOn = show.includes(k);
+      if (tagOn.get(k) !== isOn) {
+        tagOn.set(k, isOn);
+        el.classList.toggle("on", isOn);
+      }
+      if (!isOn) return;
+
+      if (centers[k]) {
+        centers[k].getWorldPosition(tmpPos);
+        const a = fan[k];
+        tmpPos.addScaledVector(up, Math.cos(a) * radii[k]).addScaledVector(right, Math.sin(a) * radii[k]);
+      } else {
+        gTread.getWorldPosition(tmpPos).addScaledVector(up, 1.95).addScaledVector(right, 0.9);
+      }
+      v.copy(tmpPos).project(camera);
+      const x = (v.x * 0.5 + 0.5) * stageW;
+      const y = (-v.y * 0.5 + 0.5) * stageH;
+      const tw = tagWidths.get(k) ?? 140;
+      const flip = x + tw > stageW - 12;
+      if (tagFlip.get(k) !== flip) {
+        tagFlip.set(k, flip);
+        el.classList.toggle("flip", flip);
+      }
+      const tx = Math.max(8, flip ? x - tw : x);
+      el.style.transform = `translate3d(${tx.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    });
+  }
+
+  function measure() {
     fit = 1;
     const r = stageEl.getBoundingClientRect();
-    renderer.setSize(r.width, r.height, false);
-    camera.aspect = r.width / Math.max(1, r.height);
-    /* keep the tyre framed on narrow screens */
+    stageW = Math.max(1, r.width);
+    stageH = Math.max(1, r.height);
+
+    const sr = scroll.getBoundingClientRect();
+    scrollTop = sr.top + window.scrollY;
+    scrollHeight = scroll.offsetHeight;
+
+    renderer.setSize(stageW, stageH, false);
+    camera.aspect = stageW / stageH;
     camera.fov = camera.aspect < 0.8 ? 40 : camera.aspect < 1.2 ? 33 : 28;
-    /* frame the tyre right of centre on wide screens (copy sits left), and high on phones (copy sits below) */
-    const w = Math.round(r.width), h = Math.round(r.height);
-    if (camera.aspect >= 1.2) camera.setViewOffset(w, h, -Math.round(w * 0.1), -Math.round(h * 0.03), w, h);
-    else {
-      /* phones: centre the tyre in the gap between the progress bar (top ~120px) and the copy (bottom ~372px) */
+    const w = Math.round(stageW), h = Math.round(stageH);
+    if (camera.aspect >= 1.2) {
+      camera.setViewOffset(w, h, -Math.round(w * 0.1), -Math.round(h * 0.03), w, h);
+    } else {
       camera.setViewOffset(w, h, -Math.round(w * 0.03), 108, w, h);
-      /* on short screens pull the camera back so the tyre fits that gap */
       const gap = Math.max(120, h - 372 - 120);
       fit = Math.max(1, (0.36 * h) / (0.85 * gap));
     }
     camera.updateProjectionMatrix();
+    measureTagWidths();
   }
 
   function setStage(i: number) {
@@ -270,48 +302,106 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     Object.assign(tgt, STAGES[i]);
   }
 
-  function onScroll() {
-    const r = scroll.getBoundingClientRect(), total = scroll.offsetHeight - window.innerHeight;
-    const p = Math.min(1, Math.max(0, -r.top / (total || 1)));
+  const isNearViewport = (y: number, vh: number) =>
+    y + vh > scrollTop - 300 && y < scrollTop + scrollHeight + 300;
+
+  const stopLoop = () => {
+    if (!running) return;
+    running = false;
+    cancelAnimationFrame(raf);
+    raf = 0;
+  };
+
+  const startLoop = () => {
+    if (running || document.hidden) return;
+    running = true;
+    last = performance.now();
+    raf = requestAnimationFrame(frame);
+  };
+
+  function syncFromScroll(y: number, vh: number) {
+    if (isNearViewport(y, vh)) {
+      if (!running) startLoop();
+    } else {
+      if (running) stopLoop();
+      return;
+    }
+
+    const total = Math.max(1, scrollHeight - vh);
+    const p = Math.min(1, Math.max(0, (y - scrollTop) / total));
     const f = Math.min(N - 0.0001, p * N);
     setStage(Math.floor(f));
     local = f - Math.floor(f);
-    segs.forEach((s, k) => { s.style.setProperty("--f", String(k < stage ? 1 : k === stage ? local : 0)); s.classList.toggle("on", k === stage); });
-    sec.style.setProperty("--p", p.toFixed(4));
-    /* scroll-scrubbed moments */
+
+    for (let k = 0; k < segs.length; k++) {
+      const fv = (k < stage ? 1 : k === stage ? local : 0).toFixed(3);
+      if (lastSegF[k] !== fv) {
+        lastSegF[k] = fv;
+        segs[k].style.setProperty("--f", fv);
+      }
+      segs[k].classList.toggle("on", k === stage);
+    }
+
+    const pStr = p.toFixed(4);
+    if (pStr !== lastPStr) {
+      lastPStr = pStr;
+      sec.style.setProperty("--p", pStr);
+    }
+
     if (stage === 3) tgt.explode = 1 - THREE.MathUtils.smoothstep(local, 0.1, 0.85);
     tgt.scan = stage === 5 ? THREE.MathUtils.lerp(-0.62, 0.62, THREE.MathUtils.smoothstep(local, 0.05, 0.9)) : -1;
   }
 
   function frame(now: number) {
+    if (!running) return;
+    const bus = scrollBus.getState();
+    if (!isNearViewport(bus.y, bus.vh)) {
+      stopLoop();
+      return;
+    }
     raf = requestAnimationFrame(frame);
-    if (!visible) return;
-    const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    const k = reduce.matches ? 1 : 1 - Math.exp(-dt * 4.5);
-    (Object.keys(cur) as (keyof typeof cur)[]).forEach((key) => { cur[key] += (tgt[key] - cur[key]) * k; });
-    smx += (mx - smx) * (reduce.matches ? 1 : 1 - Math.exp(-dt * 3));
-    smy += (my - smy) * (reduce.matches ? 1 : 1 - Math.exp(-dt * 3));
 
-    /* exploded view along the tyre axis, centred */
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const k = reduce.matches ? 1 : 1 - Math.exp(-dt * 5.2);
+    cur.explode += (tgt.explode - cur.explode) * k;
+    cur.rubber += (tgt.rubber - cur.rubber) * k;
+    cur.band += (tgt.band - cur.band) * k;
+    cur.dist += (tgt.dist - cur.dist) * k;
+    cur.yaw += (tgt.yaw - cur.yaw) * k;
+    cur.pitch += (tgt.pitch - cur.pitch) * k;
+    cur.focus += (tgt.focus - cur.focus) * k;
+    cur.heat += (tgt.heat - cur.heat) * k;
+    cur.idGlow += (tgt.idGlow - cur.idGlow) * k;
+    cur.scan += (tgt.scan - cur.scan) * k;
+
+    const pk = reduce.matches ? 1 : 1 - Math.exp(-dt * 3.5);
+    smx += (mx - smx) * pk;
+    smy += (my - smy) * pk;
+
     const e = cur.explode;
-    const offs = { band: 0, base: 0.95 * e, cush: 1.9 * e, tread: 2.85 * e };
     const mid = 1.425 * e;
-    gBand.position.y = offs.band - mid; gBase.position.y = offs.base - mid;
-    gCush.position.y = offs.cush - mid; gTread.position.y = offs.tread - mid;
+    gBand.position.y = -mid;
+    gBase.position.y = 0.95 * e - mid;
+    gCush.position.y = 1.9 * e - mid;
+    gTread.position.y = 2.85 * e - mid;
 
-    setOpacity(mats.base, cur.rubber); setOpacity(mats.cush, cur.rubber); setOpacity(mats.tread, cur.rubber);
+    setOpacity(mats.base, cur.rubber);
+    setOpacity(mats.cush, cur.rubber);
+    setOpacity(mats.tread, cur.rubber);
     setOpacity(bandMat, cur.band);
     idMat.opacity = Math.min(1, cur.band * 1.2);
     idMat.emissiveIntensity = cur.idGlow * 1.6;
 
-    /* cure: warm glow breathing through the rubber */
     const breath = 0.75 + 0.25 * Math.sin(now / 420);
-    [mats.base, mats.cush, mats.tread].forEach((m) => (m.emissiveIntensity = cur.heat * 0.012 * breath));
+    const heatEmissive = cur.heat * 0.012 * breath;
+    mats.base.emissiveIntensity = heatEmissive;
+    mats.cush.emissiveIntensity = heatEmissive;
+    mats.tread.emissiveIntensity = heatEmissive;
     warm.intensity = cur.heat * 26 * breath;
     (glow.material as THREE.MeshBasicMaterial).opacity = cur.heat * (0.7 + 0.3 * breath);
     glow.visible = cur.heat > 0.01;
 
-    /* scan ring sweeping along the axis */
     const scanOn = cur.scan > -0.98 ? 1 : 0;
     scanGroup.position.y = Math.max(-0.62, cur.scan);
     scanGroup.visible = scanOn > 0;
@@ -323,65 +413,79 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     yaw.rotation.y = cur.yaw + smx * 0.12;
     pitch.rotation.x = cur.pitch + smy * 0.06;
 
-    /* focus: slide the whole model so the band sits at the centre of the frame */
-    root.position.set(0, 0, 0); root.updateMatrixWorld(true);
-    const bw = gBand.getWorldPosition(new THREE.Vector3());
-    root.position.set(-bw.x * cur.focus, 0, -bw.z * cur.focus);
+    root.position.set(0, 0, 0);
+    root.updateMatrixWorld(true);
+    gBand.getWorldPosition(tmpBandPos);
+    root.position.set(-tmpBandPos.x * cur.focus, 0, -tmpBandPos.z * cur.focus);
+
     const near = camera.aspect < 0.8 ? 1.3 * fit : camera.aspect < 1.2 ? 1.18 : 1;
     camera.position.set(0, 0.35 + cur.pitch * 1.6, cur.dist * 1.55 * near);
     camera.lookAt(0, 0, 0);
-    glow.quaternion.copy(camera.quaternion);
-    glow.position.copy(root.position).addScaledVector(new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion), 3);
 
-    const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
+    glow.quaternion.copy(camera.quaternion);
+    tmpCamBack.set(0, 0, -1).applyQuaternion(camera.quaternion);
+    glow.position.copy(root.position).addScaledVector(tmpCamBack, 3);
+
     renderer.render(scene, camera);
-    placeTags(w, h);
+    placeTags();
   }
 
   /* ---------- wiring ---------- */
   const goButtons = Array.from(sec.querySelectorAll<HTMLElement>("[data-go]"));
   const onGo = (ev: Event) => {
-    const i = Number((ev.currentTarget as HTMLElement).dataset.go), total = scroll.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: scroll.getBoundingClientRect().top + window.scrollY + total * ((i + 0.5) / N), behavior: reduce.matches ? "auto" : "smooth" });
+    const i = Number((ev.currentTarget as HTMLElement).dataset.go);
+    const total = Math.max(1, scrollHeight - scrollBus.getState().vh);
+    scrollBus.scrollTo(scrollTop + total * ((i + 0.5) / N), { duration: 0.95 });
   };
   goButtons.forEach((b) => b.addEventListener("click", onGo));
 
   const onPointer = (e: PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
-    mx = (e.clientX / window.innerWidth) * 2 - 1; my = (e.clientY / window.innerHeight) * 2 - 1;
+    if (e.pointerType !== "mouse" || !running) return;
+    mx = (e.clientX / window.innerWidth) * 2 - 1;
+    my = (e.clientY / window.innerHeight) * 2 - 1;
   };
-  const layout = () => {
-    stacked = false;
-    scroll.style.height = N * 70 + 100 + "vh";
-    resize(); onScroll();
-  };
-  const introIO = new IntersectionObserver((es, o) => es.forEach((en) => { if (en.isIntersecting) { sec.classList.add("in"); o.disconnect(); } }), { threshold: 0.25 });
-  introIO.observe($(".h3-intro"));
-  const viewIO = new IntersectionObserver((es) => es.forEach((en) => { visible = en.isIntersecting; last = performance.now(); }), { rootMargin: "200px 0px" });
-  viewIO.observe(scroll);
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", layout);
-  window.addEventListener("pointermove", onPointer, { passive: true });
-  layout();
+  const onVisibility = () => {
+    if (document.hidden) stopLoop();
+    else {
+      const b = scrollBus.getState();
+      if (isNearViewport(b.y, b.vh)) startLoop();
+    }
+  };
+
+  const introIO = new IntersectionObserver(
+    (es, o) => es.forEach((en) => { if (en.isIntersecting) { sec.classList.add("in"); o.disconnect(); } }),
+    { threshold: 0.25 }
+  );
+  introIO.observe($(".h3-intro"));
+
+  document.fonts.ready.then(measureTagWidths);
+  measure();
   setStage(0);
-  raf = requestAnimationFrame(frame);
-  void stacked;
+
+  const unsubResize = scrollBus.onResize(measure);
+  const unsubScroll = scrollBus.subscribe((s) => syncFromScroll(s.y, s.vh));
+  window.addEventListener("pointermove", onPointer, { passive: true });
+  document.addEventListener("visibilitychange", onVisibility);
+
+  // Trigger one resize pass after mounting height so downstream sections cache updated offsets
+  scrollBus.refresh();
 
   return () => {
-    cancelAnimationFrame(raf);
-    window.removeEventListener("scroll", onScroll);
-    window.removeEventListener("resize", layout);
+    stopLoop();
+    unsubScroll();
+    unsubResize();
     window.removeEventListener("pointermove", onPointer);
+    document.removeEventListener("visibilitychange", onVisibility);
     goButtons.forEach((b) => b.removeEventListener("click", onGo));
-    introIO.disconnect(); viewIO.disconnect();
+    introIO.disconnect();
     scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry) m.geometry.dispose();
       const mat = m.material as THREE.Material | THREE.Material[] | undefined;
       if (Array.isArray(mat)) mat.forEach((x) => x.dispose()); else mat?.dispose();
     });
-    idTex.dispose(); envRT.dispose(); pmrem.dispose(); renderer.dispose();
+    idTex.dispose(); shadowTex.dispose(); glowTex.dispose(); envRT.dispose(); pmrem.dispose(); renderer.dispose();
     scroll.style.height = "";
   };
 }

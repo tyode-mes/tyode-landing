@@ -1,5 +1,8 @@
-/* Animation and scroll logic for the features section.
-   Runs once on mount and returns a cleanup function (safe under React Strict Mode). */
+/* Section 05: Features scroll & scene choreography.
+   Driven by scrollBus (zero layout reads during scroll, zero forced reflow on stage cut,
+   pauses clock & grain off-screen, scoped rAF pointer parallax). */
+
+import { scrollBus } from "@/lib/scrollBus";
 
 type Meta = { mod: string; st: string; hud: string; ro: string };
 
@@ -23,7 +26,7 @@ export function initFeatures(sec: HTMLElement): () => void {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const timers: number[] = [];
 
-  /* build scenes: desktop screen + mobile cards (cleared first, so a re-run never duplicates) */
+  /* build scenes: desktop screen + mobile cards */
   desk.innerHTML = "";
   mob.innerHTML = "";
   desk.appendChild(tpl.content.cloneNode(true));
@@ -36,7 +39,7 @@ export function initFeatures(sec: HTMLElement): () => void {
     mob.appendChild(a);
   });
 
-  /* data matrix: fixed finder edges + a seeded fill, identical in every copy */
+  /* data matrix */
   sec.querySelectorAll("#ft-dm").forEach((g) => {
     let s = "", seed = 427;
     const n = 12, c = 8, x0 = 96, y0 = 40;
@@ -50,7 +53,7 @@ export function initFeatures(sec: HTMLElement): () => void {
     g.removeAttribute("id");
   });
 
-  /* contained tyres by location: 12 in WIP, 26 in the warehouse, 8 loaded for export */
+  /* contained tyres */
   sec.querySelectorAll("#ft-dots").forEach((g) => {
     let s = "", k = 0;
     ([[110, 12, "hit"], [218, 13, "hit"], [246, 13, "hit"], [350, 8, "ship"]] as const).forEach(([y, n, cls]) => {
@@ -63,7 +66,7 @@ export function initFeatures(sec: HTMLElement): () => void {
     g.removeAttribute("id");
   });
 
-  /* control chart: weight per tyre, trending toward the upper limit */
+  /* control chart */
   const spc = Array.from({ length: 40 }, (_, k) => {
     const noise = (((k * 37) % 11) - 5) * 4, trend = k >= 22 ? -(k - 22) * 5.6 : 0;
     return [90 + k * 16, Math.max(160, 270 + noise + trend)];
@@ -87,16 +90,18 @@ export function initFeatures(sec: HTMLElement): () => void {
   );
   introIO.observe($(".ft-intro"));
 
-  /* pinned stage */
+  /* pinned stage refs & cached geometry */
   const idx = $("#ft-index"), mod = $("#ft-module"), hudL = $("#ft-hud-l"), hudR = $("#ft-hud-r"),
         ro = $("#ft-readout"), screen = $("#ft-screen"), clk = $("#ft-clock");
   const gs = [0, 1, 2].map((k) => $("#ft-g" + k));
-  let cur = -1, stacked = false;
+  let cur = -1, stacked = false, active = false;
+  let scrollTop = 0, scrollHeight = 1, lastPStr = "";
+  let cutRaf1 = 0, cutRaf2 = 0;
 
   const countUp = (el: HTMLElement) => {
     if (reduce.matches) return;
     el.querySelectorAll<HTMLElement>("[data-n]").forEach((b) => {
-      const n = Number(b.dataset.n), t0 = performance.now(), d = 900;
+      const n = Number(b.dataset.n), t0 = performance.now(), d = 800;
       const step = (t: number) => {
         const k = Math.min(1, (t - t0) / d), e = 1 - Math.pow(1 - k, 3);
         b.textContent = String(Math.round(n * e));
@@ -106,9 +111,10 @@ export function initFeatures(sec: HTMLElement): () => void {
     });
   };
 
-  /* clock in the screen header, ticking like timecode */
+  /* shift clock only ticks while section is near viewport */
   let secs = 2 * 3600 + 14 * 60 + 9;
   const clock = window.setInterval(() => {
+    if (!active || document.hidden) return;
     secs = (secs + 1) % 86400;
     const h = String(Math.floor(secs / 3600)).padStart(2, "0"),
           mi = String(Math.floor(secs / 60) % 60).padStart(2, "0"),
@@ -134,65 +140,114 @@ export function initFeatures(sec: HTMLElement): () => void {
     hudR.textContent = `${String(i + 1).padStart(2, "0")} / 0${N}`;
     ro.innerHTML = m.ro;
     countUp(ro);
-    /* restart the cut: progress line, light bloom, text roll */
+
+    /* restart cut animations asynchronously (no synchronous offsetWidth reflow!) */
+    cancelAnimationFrame(cutRaf1);
+    cancelAnimationFrame(cutRaf2);
     screen.classList.remove("cut");
-    [ro, hudL, idx].forEach((el) => el.classList.remove("roll"));
-    void screen.offsetWidth;
-    screen.classList.add("cut");
-    [ro, hudL, idx].forEach((el) => el.classList.add("roll"));
+    ro.classList.remove("roll");
+    hudL.classList.remove("roll");
+    idx.classList.remove("roll");
+    cutRaf1 = requestAnimationFrame(() => {
+      cutRaf2 = requestAnimationFrame(() => {
+        screen.classList.add("cut");
+        ro.classList.add("roll");
+        hudL.classList.add("roll");
+        idx.classList.add("roll");
+      });
+    });
+
     screen.classList.toggle("hot", i > 0);
     gs.forEach((g, k) => g.classList.toggle("on", Math.floor(i / 2) === k));
   }
 
-  function onScroll() {
-    if (stacked) return;
-    const r = scroll.getBoundingClientRect(), total = scroll.offsetHeight - window.innerHeight;
-    const p = Math.min(1, Math.max(0, -r.top / (total || 1)));
-    sec.style.setProperty("--p", p.toFixed(4));
+  function applyTrackHeight() {
+    const nextStacked = window.innerWidth < 960;
+    if (nextStacked !== stacked || (!nextStacked && !scroll.style.height)) {
+      stacked = nextStacked;
+      sec.classList.toggle("is-stacked", stacked);
+      scroll.style.height = stacked ? "" : N * 85 + 100 + "vh";
+      return true;
+    }
+    return false;
+  }
+
+  function measure() {
+    applyTrackHeight();
+    const r = scroll.getBoundingClientRect();
+    scrollTop = r.top + window.scrollY;
+    scrollHeight = scroll.offsetHeight;
+  }
+
+  function syncFromScroll(y: number, vh: number) {
+    const near = y + vh > scrollTop - 250 && y < scrollTop + scrollHeight + 250;
+    if (near !== active) {
+      active = near;
+      sec.classList.toggle("is-active", active);
+    }
+    if (stacked || !active) return;
+
+    const total = Math.max(1, scrollHeight - vh);
+    const p = Math.min(1, Math.max(0, (y - scrollTop) / total));
+    const pStr = p.toFixed(4);
+    if (pStr !== lastPStr) {
+      lastPStr = pStr;
+      sec.style.setProperty("--p", pStr);
+    }
     show(Math.min(N - 1, Math.floor(p * N * 0.9999)));
   }
 
-  function layout() {
-    stacked = window.innerWidth < 960;
-    sec.classList.toggle("is-stacked", stacked);
-    scroll.style.height = stacked ? "" : N * 85 + 100 + "vh";
-    if (!stacked) onScroll();
-  }
-
-  /* jump to a feature from the ruler */
+  /* jump to a feature from the ruler via scrollBus */
   const goButtons = Array.from(sec.querySelectorAll<HTMLElement>("[data-go]"));
   const onGo = (ev: Event) => {
-    const i = Number((ev.currentTarget as HTMLElement).dataset.go), total = scroll.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: scroll.getBoundingClientRect().top + window.scrollY + total * ((i + 0.5) / N), behavior: reduce.matches ? "auto" : "smooth" });
+    const i = Number((ev.currentTarget as HTMLElement).dataset.go);
+    const total = Math.max(1, scrollHeight - scrollBus.getState().vh);
+    scrollBus.scrollTo(scrollTop + total * ((i + 0.5) / N), { duration: 0.95 });
   };
   goButtons.forEach((b) => b.addEventListener("click", onGo));
 
-  /* pointer parallax and screen light */
+  /* scoped, rAF-throttled pointer parallax on #ft-screen only (not whole section) */
+  let ptrRaf = 0;
+  let pmx = 0, pmy = 0;
   const onPointer = (e: PointerEvent) => {
-    if (e.pointerType !== "mouse" || stacked) return;
-    sec.style.setProperty("--mx", ((e.clientX / window.innerWidth) * 2 - 1).toFixed(3));
-    sec.style.setProperty("--my", ((e.clientY / window.innerHeight) * 2 - 1).toFixed(3));
+    if (e.pointerType !== "mouse" || stacked || !active) return;
+    pmx = (e.clientX / window.innerWidth) * 2 - 1;
+    pmy = (e.clientY / window.innerHeight) * 2 - 1;
+    if (!ptrRaf) {
+      ptrRaf = requestAnimationFrame(() => {
+        ptrRaf = 0;
+        screen.style.setProperty("--mx", pmx.toFixed(3));
+        screen.style.setProperty("--my", pmy.toFixed(3));
+      });
+    }
   };
 
-  /* stacked cards (phones, reduced motion) play their scene when in view */
+  /* mobile stacked cards */
   const mobIO = new IntersectionObserver(
     (es) => es.forEach((e) => { const sc = e.target.querySelector(".sc"); if (sc) sc.classList.toggle("on", e.isIntersecting); }),
     { threshold: 0.45 }
   );
   mob.querySelectorAll(".m-screen").forEach((m) => mobIO.observe(m));
 
-  window.addEventListener("pointermove", onPointer, { passive: true });
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", layout);
-  reduce.addEventListener?.("change", layout);
-  layout();
+  applyTrackHeight();
+  measure();
   show(0);
 
+  const unsubResize = scrollBus.onResize(measure);
+  const unsubScroll = scrollBus.subscribe((s) => syncFromScroll(s.y, s.vh));
+  window.addEventListener("pointermove", onPointer, { passive: true });
+  reduce.addEventListener?.("change", measure);
+
+  scrollBus.refresh();
+
   return () => {
+    unsubScroll();
+    unsubResize();
+    cancelAnimationFrame(cutRaf1);
+    cancelAnimationFrame(cutRaf2);
+    if (ptrRaf) cancelAnimationFrame(ptrRaf);
     window.removeEventListener("pointermove", onPointer);
-    window.removeEventListener("scroll", onScroll);
-    window.removeEventListener("resize", layout);
-    reduce.removeEventListener?.("change", layout);
+    reduce.removeEventListener?.("change", measure);
     goButtons.forEach((b) => b.removeEventListener("click", onGo));
     introIO.disconnect();
     mobIO.disconnect();
