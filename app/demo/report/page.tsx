@@ -1,69 +1,77 @@
-import { FLAGS, MACHINES, NOW, PRESSES, TYRES, byHour, builderFor, hhmm, totals } from "../data";
+"use client";
+
+/* Shift report: produced automatically from the counts, flags and holds. */
+
+import { ALERTS, BUILDERS, DATE, MACHINES, NOW, STITCHES, TYRES, byHour, counts, hhmm } from "../data";
+import { heldList, useDemo } from "../store";
 import { Card, PageHead } from "../ui";
 import PrintButton from "./PrintButton";
 import s from "../demo.module.css";
 
 export default function Report() {
-  const t = totals();
+  const { st } = useDemo();
+  const c = counts();
+  const ok = st.approvedUnattributed;
   const hours = byHour();
+  const stage = (k: string) => TYRES.filter((t) => t.stage === k).length;
   return (
     <>
-      <PageHead title="Shift report" sub={`Shift A, 06:00 to ${hhmm(NOW)} (shift still running). Ready for the production meeting and for checking orders.`}>
+      <PageHead title="Shift report" sub={`Line PL-1, Shift A, ${DATE}, 06:00 to ${hhmm(NOW)} (shift still running). Produced automatically, ready for the production meeting.`}>
         <PrintButton />
       </PageHead>
 
       <div className={s.gridTwo}>
-        <Card title="Summary">
+        <Card title="Green tyre count">
           <div className={s.facts}>
-            <div><span>Built and counted</span><b>{t.built}</b></div>
-            <div><span>Loaded into presses</span><b>{t.loaded}</b></div>
-            <div><span>Waiting on carts</span><b>{t.waiting}</b></div>
-            <div><span>Missing, open</span><b className={s.red}>{t.missing}</b></div>
-            <div><span>Found and loaded</span><b>{TYRES.filter((x) => x.status === "found").length}</b></div>
-            <div><span>Flagged attempts</span><b>{FLAGS.length}</b></div>
-            <div><span>Manual count entries</span><b>0</b></div>
-            <div><span>Accounted for</span><b>{t.built - t.missing} of {t.built}</b></div>
+            <div><span>Stitch signals</span><b>{c.signals}</b></div>
+            <div><span>Counted (verified)</span><b>{c.counted + (ok ? 1 : 0)}</b></div>
+            <div><span>Flagged, not counted</span><b>{c.flagged}</b></div>
+            <div><span>Unattributed</span><b>{ok ? "0 (1 approved)" : c.unattributed}</b></div>
+            <div><span>Counts typed by hand</span><b>0</b></div>
+            <div><span>Counters online</span><b>{MACHINES.length}/{MACHINES.length}</b></div>
           </div>
         </Card>
-        <Card title="By hour">
-          <table className={s.table}>
-            <thead><tr><th>Hour</th><th>Built</th><th>Loaded</th><th>Difference</th></tr></thead>
-            <tbody>
-              {hours.map((h) => (
-                <tr key={h.hour}><td>{h.hour}</td><td>{h.built}</td><td>{h.loaded}</td><td>{h.built - h.loaded > 0 ? `+${h.built - h.loaded}` : h.built - h.loaded}</td></tr>
-              ))}
-            </tbody>
-          </table>
-          <p className={s.muted}>A positive difference is normal: tyres rest on a cart before curing.</p>
+        <Card title="Traceability">
+          <div className={s.facts}>
+            <div><span>Waiting to cure</span><b>{stage("built")}</b></div>
+            <div><span>Curing</span><b>{stage("curing")}</b></div>
+            <div><span>Waiting for inspection</span><b>{stage("inspection")}</b></div>
+            <div><span>Released to storage</span><b>{stage("released")}</b></div>
+            <div><span>On hold</span><b className={s.red}>{heldList(st).length}</b></div>
+            <div><span>Alerts raised</span><b>{ALERTS.length}</b></div>
+          </div>
         </Card>
       </div>
 
-      <Card title="By machine">
+      <div className={s.gridTwo}>
+        <Card title="By builder">
+          <table className={s.table}>
+            <thead><tr><th>Builder</th><th>Machine</th><th>Counted</th><th>Flagged</th></tr></thead>
+            <tbody>
+              {BUILDERS.map((b) => { const k = counts(b.machine); return (
+                <tr key={b.badge}><td>{b.name}<small>Badge {b.badge}</small></td><td>{b.machine}</td><td>{k.counted + (b.machine === "BM-06" && ok ? 1 : 0)}</td><td>{k.flagged}</td></tr>
+              ); })}
+            </tbody>
+          </table>
+        </Card>
+        <Card title="By hour">
+          <table className={s.table}>
+            <thead><tr><th>Hour</th><th>Counted</th><th>Flagged</th></tr></thead>
+            <tbody>{hours.map((h) => <tr key={h.hour}><td>{h.hour}</td><td>{h.counted}</td><td>{h.flagged}</td></tr>)}</tbody>
+          </table>
+        </Card>
+      </div>
+
+      <Card title="Flags this shift">
         <table className={s.table}>
-          <thead><tr><th>Machine</th><th>Size</th><th>Builder</th><th>Built</th><th>Loaded</th><th>Waiting</th><th>Missing</th><th>Flags</th></tr></thead>
+          <thead><tr><th>Time</th><th>Machine</th><th>Type</th><th>Reason</th></tr></thead>
           <tbody>
-            {MACHINES.map((m) => {
-              const mine = TYRES.filter((x) => x.machine === m.id);
-              return (
-                <tr key={m.id}>
-                  <td>{m.id}</td><td>{m.size}</td><td>{builderFor(m.id).name}</td><td>{mine.length}</td>
-                  <td>{mine.filter((x) => x.status === "loaded" || x.status === "found").length}</td>
-                  <td>{mine.filter((x) => x.status === "waiting").length}</td>
-                  <td className={mine.some((x) => x.status === "missing") ? s.red : ""}>{mine.filter((x) => x.status === "missing").length}</td>
-                  <td>{FLAGS.filter((f) => f.where === m.id).length}</td>
-                </tr>
-              );
-            })}
+            {STITCHES.filter((x) => x.kind !== "counted").map((x) => (
+              <tr key={x.id}><td>{hhmm(x.at)}</td><td>{x.machine}</td><td>{x.kind === "flagged" ? "Too soon" : ok ? "No badge (approved)" : "No badge"}</td><td>{x.reason}</td></tr>
+            ))}
           </tbody>
         </table>
-      </Card>
-
-      <Card title="By press">
-        <div className={s.pressGrid}>
-          {PRESSES.map((p) => (
-            <div key={p.id}><span>{p.id}</span><b>{TYRES.filter((x) => x.press === p.id).length}</b></div>
-          ))}
-        </div>
+        <p className={s.muted}>Scrap is recorded separately and is not part of the count.</p>
       </Card>
     </>
   );
