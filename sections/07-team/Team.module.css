@@ -251,11 +251,6 @@
   color: var(--ink-3);
 }
 
-.note strong {
-  font-weight: 600;
-  color: var(--ink-2);
-}
-
 .note.in {
   opacity: 1;
 }
