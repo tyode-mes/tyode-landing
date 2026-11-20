@@ -1100,7 +1100,8 @@ export default function HeroVideo({
       }
     });
 
-    const frame = (now: number) => {
+    // a function declaration, so it exists before scrollBus.subscribe() runs its first callback
+    function frame(now: number) {
       if (!running) return;
       const bus = scrollBus.getState();
       const scrollY = bus.y;
