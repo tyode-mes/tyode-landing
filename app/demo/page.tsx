@@ -1,155 +1,127 @@
+"use client";
+
+/* Screen 07: green tyre count. The count comes only from each building machine's auto-stitch signal. */
+
 import Link from "next/link";
-import { BUILDERS, FLAGS, MACHINES, NOW, PRESSES, TYRES, WINDOW, builderFor, byHour, events, hhmm, totals } from "./data";
-import { Card, Kpi, PageHead } from "./ui";
+import { BUILDERS, DATE, HEARTBEAT_LIMIT, MACHINES, MIN_GAP, NOW, STITCHES, builderFor, byHour, counts, events, hhmm } from "./data";
+import { useDemo } from "./store";
+import { Card, Kpi, PageHead, Pill } from "./ui";
 import s from "./demo.module.css";
 
-export default function Overview() {
-  const t = totals();
-  const missing = TYRES.filter((x) => x.status === "missing");
+export default function GreenTyreCount() {
+  const { st, set } = useDemo();
+  const c = counts();
+  const approved = st.approvedUnattributed;
+  const counted = c.counted + (approved ? 1 : 0), unatt = approved ? 0 : c.unattributed;
   const hours = byHour();
-  const max = Math.max(...hours.map((h) => Math.max(h.built, h.loaded)));
+  const max = Math.max(...hours.map((h) => h.counted + h.flagged));
+  const flags = STITCHES.filter((x) => x.kind !== "counted").sort((a, b) => b.at - a.at);
   const ev = events().slice(0, 6);
-  const perMachine = MACHINES.map((m) => ({ ...m, built: TYRES.filter((x) => x.machine === m.id).length }));
-  const waitingByCart = ["Cart A", "Cart B", "Cart C"].map((c) => ({ c, n: TYRES.filter((x) => x.status === "waiting" && x.cart === c).length }));
 
   return (
     <>
-      <PageHead title="Green tyre count" sub={`Shift A so far, 06:00 to ${hhmm(NOW)}. Every number comes from the machines and the press scanners, not from anyone typing it in.`}>
-        <span className={s.chip}>Shift A · 11 Nov 2026</span>
+      <PageHead title="Green tyre count"
+        sub={`Shift A so far, 06:00 to ${hhmm(NOW)}. Each count comes from a building machine's auto-stitch signal and is linked to the operator's badge. Operators cannot type or change it.`}>
+        <span className={s.chip}>Line PL-1 · {DATE.slice(4)}</span>
       </PageHead>
 
-      <div className={s.kpis}>
-        <Kpi label="Built (verified)" value={t.built} sub="Machine and sensor agreed" />
-        <Kpi label="Received at press" value={t.loaded} sub="Scanned at press loading" />
-        <Kpi label="Waiting on carts" value={t.waiting} sub={`Within ${WINDOW} minutes of build`} />
-        <Kpi label="Missing" value={t.missing} filled sub="Counted, never reached a press" href="/demo/missing" />
-        <Kpi label="Flagged attempts" value={FLAGS.length} tone="amber" sub="Stopped, not counted" href="/demo/alerts" />
+      <div className={`${s.kpis} ${s.kpis4}`}>
+        <Kpi label="Counted (verified)" value={counted} sub="Valid stitch, badge logged in" />
+        <Kpi label="Flagged attempts" value={c.flagged} tone="amber" sub={`Under the ${MIN_GAP} min gap, not counted`} href="#flags" />
+        <Kpi label="Unattributed" value={unatt} tone={unatt ? "amber" : undefined} sub={unatt ? "No badge, needs approval" : "None waiting"} href="#flags" />
+        <Kpi label="Counters online" value={`${MACHINES.length}/${MACHINES.length}`} tone="green" sub={`Heartbeat every minute, alert after ${HEARTBEAT_LIMIT} min`} href="/demo/devices" />
       </div>
 
       <p className={s.balance}>
-        {t.built} built = {t.loaded} loaded + {t.waiting} waiting + {t.missing} missing. Every counted tyre is accounted for.
+        {c.signals} stitch signals = {counted} counted + {c.flagged} flagged{unatt ? ` + ${unatt} unattributed` : ""}. Scrap is recorded separately and is not part of this count.
       </p>
 
       <div className={s.gridMain}>
         <Card className={s.flush}>
           <div className={s.flushHead}>
             <h2 className={s.chartTitle}>By builder</h2>
-            <Link className={s.cardLink} href="/demo/builders">All builders</Link>
+            <Link className={s.cardLink} href="/demo/walkthrough">How the count works</Link>
           </div>
           <table className={`${s.table} ${s.tableBig}`}>
-            <thead><tr><th>Builder</th><th>Machine</th><th>Built</th><th>Received</th><th>On cart</th><th>Missing</th></tr></thead>
+            <thead><tr><th>Builder</th><th>Machine</th><th>Counted</th><th>Flagged</th><th>Status</th></tr></thead>
             <tbody>
               {BUILDERS.map((b) => {
-                const mine = TYRES.filter((x) => x.badge === b.badge);
-                const miss = mine.filter((x) => x.status === "missing").length;
+                const k = counts(b.machine);
+                const mine = k.counted + (b.machine === "BM-06" && approved ? 1 : 0);
                 return (
                   <tr key={b.badge}>
                     <td><b>{b.name}</b><small>Badge {b.badge}</small></td>
                     <td>{b.machine}</td>
-                    <td>{mine.length}</td>
-                    <td>{mine.filter((x) => x.status === "loaded" || x.status === "found").length}</td>
-                    <td>{mine.filter((x) => x.status === "waiting").length}</td>
-                    <td>{miss ? <span className={s.gap}>−{miss}</span> : <span className={s.zero}>0</span>}</td>
+                    <td>{mine}</td>
+                    <td>{k.flagged ? <span className={s.gapAmber}>{k.flagged}</span> : <span className={s.zero}>0</span>}</td>
+                    <td>
+                      {k.unattributed && !approved ? <Pill tone="amber">1 unattributed</Pill>
+                        : k.flagged ? <Pill tone="amber">Flag to review</Pill> : <Pill tone="green">Counting</Pill>}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
           <div className={s.chartBox}>
-            <h2 className={s.chartTitle}>Built vs received per hour</h2>
-            <div className={s.bars} role="img" aria-label="Tyres built and received at a press, per hour">
+            <h2 className={s.chartTitle}>Counts per hour</h2>
+            <div className={s.bars} role="img" aria-label="Counted and flagged stitches per hour">
               {hours.map((h) => (
                 <div key={h.hour} className={s.barCol}>
-                  <div className={s.barPair}>
-                    <i style={{ height: `${(h.built / max) * 100}%` }} className={s.bBuilt} title={`${h.built} built`} />
-                    <i style={{ height: `${(h.loaded / max) * 100}%` }} className={s.bLoaded} title={`${h.loaded} received`} />
+                  <div className={s.barStack}>
+                    {h.flagged > 0 && <i style={{ height: `${(h.flagged / max) * 100}%` }} className={s.bFlag} title={`${h.flagged} flagged`} />}
+                    <i style={{ height: `${(h.counted / max) * 100}%` }} className={s.bBuilt} title={`${h.counted} counted`} />
                   </div>
                   <span>{h.hour}</span>
-                  <em>{h.built} / {h.loaded}</em>
+                  <em>{h.counted}{h.flagged ? ` + ${h.flagged}` : ""}</em>
                 </div>
               ))}
             </div>
             <div className={s.legend}>
-              <span><i className={s.bBuilt} />Built</span>
-              <span><i className={s.bLoaded} />Received at press</span>
+              <span><i className={s.bBuilt} />Counted</span>
+              <span><i className={s.bFlag} />Flagged</span>
               <span>The 10:00 hour is still running.</span>
             </div>
           </div>
         </Card>
 
-        <section className={s.missPanel} aria-labelledby="miss-h">
-          <h2 id="miss-h">Missing serials ({missing.length})</h2>
+        <section className={s.flagPanel} id="flags" aria-labelledby="flags-h">
+          <h2 id="flags-h">Flags and approvals ({flags.length})</h2>
           <div className={s.missList}>
-            {missing.map((m) => (
-              <Link key={m.serial} href="/demo/missing" className={s.missItem}>
-                <b>{m.serial}</b>
-                <span>{builderFor(m.machine).name} · {m.machine}</span>
-                <em>Built {hhmm(m.builtAt)} · not at any press</em>
-              </Link>
-            ))}
-            <Link href="/demo/alerts" className={`${s.missItem} ${s.missFlag}`}>
-              <b>{FLAGS.length} flagged attempts</b>
-              <span>Cycles or scans that didn&apos;t match a real tyre</span>
-              <em>None of them were counted</em>
-            </Link>
+            {flags.map((f) => {
+              const b = builderFor(f.machine);
+              const isU = f.kind === "unattributed";
+              return (
+                <div key={f.id} className={`${s.flagItem} ${isU && approved ? s.flagDone : ""}`}>
+                  <div className={s.flagTop}>
+                    <Pill tone={isU ? (approved ? "green" : "amber") : "amber"}>{isU ? (approved ? "Approved" : "No badge") : "Too soon"}</Pill>
+                    <time>{hhmm(f.at)} · {f.machine}</time>
+                  </div>
+                  <span>{f.reason}</span>
+                  {isU && !approved && (
+                    <button type="button" className={s.btnSmall} onClick={() => set((x) => ({ ...x, approvedUnattributed: true }))}>
+                      Approve for {b.name}
+                    </button>
+                  )}
+                  {isU && approved && <em>Approved by the shift supervisor and credited to {b.name}. Logged.</em>}
+                  {!isU && <em>Not counted. Logged against badge {f.badge}.</em>}
+                </div>
+              );
+            })}
           </div>
           <Link href="/demo/report" className={s.blackBtn}>Open shift report</Link>
         </section>
       </div>
 
       <div className={s.gridMain}>
-        <Card title="Floor" action={<Link className={s.cardLink} href="/demo/walkthrough">How the count works</Link>}>
-          <svg className={s.plan} viewBox="0 0 780 360" role="img" aria-label="Floor plan: six building machines, three green tyre carts, twelve curing presses">
-            <rect x="10" y="10" width="300" height="340" rx="14" className={s.zone} />
-            <text x="26" y="34" className={s.zoneT}>Building hall</text>
-            {perMachine.map((m, i) => {
-              const x = 26 + (i % 2) * 140, y = 50 + Math.floor(i / 2) * 98;
-              return (
-                <Link key={m.id} href={`/demo/builders#${m.id}`}>
-                  <g className={s.mach}>
-                    <rect x={x} y={y} width="128" height="84" rx="10" className={m.status === "alert" ? s.machAlert : ""} />
-                    <circle cx={x + 16} cy={y + 18} r="4.5" className={s["st_" + m.status]} />
-                    <text x={x + 28} y={y + 22} className={s.machId}>{m.id}</text>
-                    <text x={x + 14} y={y + 50} className={s.machBig}>{m.built}</text>
-                    <text x={x + 14} y={y + 70} className={s.machSub}>{m.status === "idle" ? "Stopped · size change" : m.size}</text>
-                  </g>
-                </Link>
-              );
-            })}
-
-            <rect x="326" y="10" width="128" height="340" rx="14" className={s.zone} />
-            <text x="342" y="34" className={s.zoneT}>Carts</text>
-            {waitingByCart.map((c, i) => (
-              <g key={c.c} className={s.cart}>
-                <rect x="340" y={50 + i * 98} width="100" height="84" rx="10" />
-                <text x="352" y={72 + i * 98} className={s.machId}>{c.c}</text>
-                <text x="352" y={100 + i * 98} className={s.machBig}>{c.n}</text>
-                <text x="352" y={120 + i * 98} className={s.machSub}>waiting</text>
-              </g>
-            ))}
-
-            <rect x="470" y="10" width="300" height="340" rx="14" className={s.zone} />
-            <text x="486" y="34" className={s.zoneT}>Curing hall</text>
-            {PRESSES.map((p, i) => {
-              const x = 486 + (i % 4) * 70, y = 50 + Math.floor(i / 4) * 98;
-              const n = TYRES.filter((x2) => x2.press === p.id).length;
-              return (
-                <g key={p.id} className={s.press}>
-                  <circle cx={x + 30} cy={y + 34} r="26" className={s["pr_" + p.status]} />
-                  <circle cx={x + 30} cy={y + 34} r="12" className={s.prHole} />
-                  <text x={x + 30} y={y + 78} textAnchor="middle" className={s.machId}>{p.id}</text>
-                  <text x={x + 30} y={y + 92} textAnchor="middle" className={s.machSub}>{p.status === "idle" ? "idle" : `${n} loaded`}</text>
-                </g>
-              );
-            })}
-            <path d="M310 180 H326" className={s.flow} />
-            <path d="M454 180 H470" className={s.flow} />
-          </svg>
-          <div className={s.legend}>
-            <span><i className={s.st_running} />Running</span>
-            <span><i className={s.st_alert} />Flagged in the last 15 min</span>
-            <span><i className={s.st_idle} />Idle</span>
-          </div>
+        <Card title="How a stitch becomes a count">
+          <ol className={s.howSteps}>
+            <li><b>Badge log-in</b><span>The operator taps their badge at the building machine. Every count is linked to it.</span></li>
+            <li><b>Auto-stitch signal</b><span>Tyode reads the machine&apos;s PLC signal, or the stitch signal or button if there is no PLC. Read only.</span></li>
+            <li><b>Checks</b><span>At least {MIN_GAP} minutes since the last stitch on that machine, and a badge logged in.</span></li>
+            <li><b>Counted and labelled</b><span>A valid stitch is counted and a GT- label prints for the green tyre. Anything else is flagged or held for approval.</span></li>
+          </ol>
+          <p className={s.muted}>Each counter sends a heartbeat every minute. If none arrives for {HEARTBEAT_LIMIT} minutes an alert is raised, so a counter can&apos;t be quietly unplugged. Together these make the count difficult to cheat.</p>
         </Card>
 
         <Card title="Latest activity">
