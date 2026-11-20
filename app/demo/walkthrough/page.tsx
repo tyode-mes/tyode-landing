@@ -5,7 +5,7 @@ export default function Walkthrough() {
   return (
     <>
       <PageHead title="How the count works"
-        sub="Follow one green tyre from the building machine to the press, one click at a time. Then try to cheat the count and see how each attempt is caught." />
+        sub="Follow one green tyre at the building machine, one click at a time. The count comes from the auto-stitch, linked to the operator's badge. Then try to cheat it and see how each attempt is caught." />
       <CountingDemo embedded />
     </>
   );

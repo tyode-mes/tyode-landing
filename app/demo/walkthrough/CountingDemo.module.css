@@ -119,3 +119,8 @@
 @media (prefers-reduced-motion:reduce){
   .page *{animation:none!important;transition:none!important}
 }
+
+/* counter heartbeat: a ring from the counter's light once a second */
+.beat{fill:none;stroke:#1f9d5a;stroke-width:1.2;transform-box:fill-box;transform-origin:center;animation:beat 1s ease-out forwards}
+@keyframes beat{from{opacity:.9;transform:scale(.4)}to{opacity:0;transform:scale(2.6)}}
+.missing li b{color:var(--warn)}
