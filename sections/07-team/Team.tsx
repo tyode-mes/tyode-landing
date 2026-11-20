@@ -65,7 +65,6 @@ export default function Team() {
   return (
     <section ref={ref} id="team" className={styles.team} aria-labelledby="team-title">
       <header className={styles.head} data-reveal>
-        <p className={styles.kicker}>Team Tyode · CS-13</p>
         <h2 id="team-title" className={styles.heading}>
           <span className={styles.ln}><span>The people</span></span>
           <span className={styles.ln}><span>behind Tyode.</span></span>
@@ -108,7 +107,7 @@ export default function Team() {
       </ol>
 
       <p className={styles.note} data-reveal>
-        School of Computing · Informatics Institute of Technology · <strong>University of Westminster</strong>
+        School of Computing · Informatics Institute of Technology · University of Westminster
       </p>
     </section>
   );
