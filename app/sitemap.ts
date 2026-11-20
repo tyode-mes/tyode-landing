@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
-/** /sitemap.xml: the pages search engines should index (the landing page and the live demo) */
+/** /sitemap.xml: the pages search engines should index (the landing page and the two demos) */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
@@ -12,6 +12,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${SITE_URL}/demo`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/passport`,
       changeFrequency: "monthly",
       priority: 0.8,
     },
