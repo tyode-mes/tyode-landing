@@ -28,6 +28,13 @@ const PATHS: Record<string, string> = {
   press: "M5 4h14M7 4v5h10V4M12 9v4m-6 7h12v-4H6z",
   clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3.5 2",
   shield: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6zm-3 9 2 2 4-4",
+  alert: "M12 4 2.5 20h19zM12 10v4.5m0 2.6v.4",
+  lock: "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+  chat: "M4 5h16v11H9l-5 4zM8 9.5h8M8 12.5h5",
+  sliders: "M5 4v16M12 4v16M19 4v16M3 15h4M10 8h4M17 13h4",
+  tablet: "M6 3h12v18H6zM11 18h2",
+  check: "M5 4h14v16H5zM8.5 9l1.5 1.5 3-3M8.5 15h7",
+  bell: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20h4",
 };
 
 export function Icon({ name, color, size = 22 }: { name: string; color: string; size?: number }) {
