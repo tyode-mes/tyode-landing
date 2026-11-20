@@ -3,8 +3,8 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import styles from "./Team.module.css";
 
-// Who builds Tyode. Add each photo to /public/team/ and set `photo` (e.g. "/team/name.jpg");
-// until then the avatar shows initials. Fill in the links when you have them.
+// Who builds Tyode. Photos live in /public/team/ as square 600x600 .webp files; set `photo` (e.g. "/team/name.webp").
+// Without a photo the avatar shows initials. Fill in the links when you have them.
 const TEAM: {
   name: string;
   role: string;
@@ -13,19 +13,19 @@ const TEAM: {
   github?: string;
   email?: string;
 }[] = [
-  { name: "Dananji Sendanayake", role: "Product architecture & engineering", email: "dananji.20240869@iit.ac.lk",
+  { name: "Dananji Sendanayake", role: "Product architecture & engineering", photo: "/team/dananji.webp", email: "dananji.20240869@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/dananji-sendanayake",
     github: "https://github.com/danadilsendanayake" },
-  { name: "Chamidu Sumanasekara", role: "Core engineering & product design", email: "chamidu.20240529@iit.ac.lk",
+  { name: "Chamidu Sumanasekara", role: "Core engineering & product design", photo: "/team/chamidu.webp", email: "chamidu.20240529@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/chamidu-kaveesha/",
     github: "https://github.com/ChamiduKaveesha" },
-  { name: "Adeepa Aryaprema", role: "Project delivery & engineering", email: "adeepa.20240520@iit.ac.lk",
+  { name: "Adeepa Aryaprema", role: "Project delivery & engineering", photo: "/team/adeepa.webp", email: "adeepa.20240520@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/adeepa-aryaprema-16198231a/",
     github: "https://github.com/Adeepa-Aryaprema" },
   { name: "Usmaan Imran", role: "Engineering, design & operations", email: "usmaan.20240530@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/usmaanimran/",
     github: "https://github.com/usmaanimran" },
-  { name: "Sadila Kaluhendiwala", role: "Growth & go-to-market", email: "sadila.20250214@iit.ac.lk",
+  { name: "Sadila Kaluhendiwala", role: "Growth & go-to-market", photo: "/team/sadila.webp", email: "sadila.20250214@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/sadila-kaluhendiwala-8645793b4/",
     github: "https://github.com/SadilaKalu82" },
 ];
@@ -38,7 +38,7 @@ const initials = (name: string) =>
     .slice(0, 2);
 
 /**
- * Section 07: Team. A clean credits grid; names rise in once as the section comes into view.
+ * Section 07: Team. A row of profile cards (photo, role, name, socials); names rise in once as the section comes into view.
  * The nav links to id="team".
  */
 export default function Team() {
@@ -65,27 +65,27 @@ export default function Team() {
   return (
     <section ref={ref} id="team" className={styles.team} aria-labelledby="team-title">
       <header className={styles.head} data-reveal>
+        <p className={styles.kicker}>Team Tyode · CS-13</p>
         <h2 id="team-title" className={styles.heading}>
           <span className={styles.ln}><span>The people</span></span>
           <span className={styles.ln}><span>behind Tyode.</span></span>
         </h2>
+        <p className={styles.sub}>Five builders. One plant floor that runs on proof, not paper.</p>
       </header>
 
       <ol className={styles.credits}>
         {TEAM.map((m, i) => (
           <li key={m.name} className={styles.credit} data-reveal style={{ "--i": i } as CSSProperties}>
-            <p className={styles.role}>{m.role}</p>
-            <p className={styles.name}>
-              <span className={styles.avatar}>
-                {m.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.photo} alt="" />
-                ) : (
-                  <span aria-hidden="true">{initials(m.name)}</span>
-                )}
-              </span>
-              {m.name}
-            </p>
+            <span className={styles.avatar}>
+              {m.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={m.photo} alt="" width={600} height={600} loading="lazy" decoding="async" />
+              ) : (
+                <span aria-hidden="true">{initials(m.name)}</span>
+              )}
+            </span>
+            <p className={styles.role}>{m.role.replace(" & ", "\n& ")}</p>
+            <p className={styles.name}>{m.name}</p>
             <div className={styles.links}>
               <a href={m.linkedin ?? "#"} target="_blank" rel="noopener noreferrer" aria-label={`${m.name} on LinkedIn`}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -108,7 +108,7 @@ export default function Team() {
       </ol>
 
       <p className={styles.note} data-reveal>
-        School of Computing · Informatics Institute of Technology · University of Westminster
+        School of Computing · Informatics Institute of Technology · <strong>University of Westminster</strong>
       </p>
     </section>
   );
