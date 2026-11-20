@@ -1,9 +1,9 @@
 "use client";
 
 /* Green tyre counting: a guided concept demo with sample data.
-   A technical drawing of the floor (tyre building machines, a green tyre cart, curing presses).
-   Nothing runs on its own: the visitor steps through one tyre's journey, then tries each way of
-   cheating the count and sees how it is caught. */
+   A technical drawing of the building area. The count comes only from the building machine's
+   auto-stitch signal, checked against a 15 minute minimum gap and the operator's badge. Nothing runs
+   on its own: the visitor steps through one tyre, then tries each way of cheating the count. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -123,67 +123,74 @@ function Tag({ x, y, lines, tone = "plain" }: { x: number; y: number; lines: str
 
 const BM = { "BM-01": { x: 5, y: 9 }, "BM-02": { x: 5, y: 34 } } as const;
 const CART = { x: 41, y: 25 };
-const PRESSES = { "P-01": { x: 75, y: 3 }, "P-02": { x: 75, y: 17 }, "P-03": { x: 75, y: 31 }, "P-04": { x: 75, y: 45 } } as const;
-type PressId = keyof typeof PRESSES;
+const PRESSES = [{ x: 75, y: 3 }, { x: 75, y: 17 }, { x: 75, y: 31 }, { x: 75, y: 45 }];
+const MIN_GAP = 15;
 
 const drumPos = (): V3 => [BM["BM-01"].x + 7.2, BM["BM-01"].y + 6, 6];
 const cartSlot = (i: number): V3 => [CART.x + 1.6 + i * 1.75, CART.y + 2.5, 5.3];
-const mouldPos = (p: PressId): V3 => [PRESSES[p].x + 5.5, PRESSES[p].y + 4.5, 4.6];
 
 /* ---------- demo state ---------- */
 
-type Where = "drum" | "cart" | "press" | "gone" | "missing";
-type Tyre = { serial: string; builtAt: number; at: Where; press?: PressId; loadedAt?: number };
+type Tyre = { serial: string; builtAt: number };
 type LogKind = "ok" | "warn" | "bad" | "info";
 type Fx = { kind: string; t0: number };
-type Move = { serial: string; from: V3; to: V3; t0: number; dur: number; fade?: boolean };
+type Move = { serial: string; from: V3; to: V3; t0: number; dur: number };
 type State = {
-  badge: boolean; clock: number; seq: number; tyres: Tyre[]; flags: number;
+  badge: boolean; clock: number; seq: number; last: number | null; online: boolean;
+  drum: "empty" | "built" | "labelled"; label: string | null;
+  counted: Tyre[]; onCart: string[]; flagged: number; unattributed: number; labels: number; alerts: number;
   log: { id: number; t: number; kind: LogKind; text: string }[];
-  fx: Fx | null; move: Move | null; drumTyre: boolean;
+  fx: Fx | null; move: Move | null;
 };
-const fresh = (): State => ({ badge: false, clock: 0, seq: 0, tyres: [], flags: 0, log: [], fx: null, move: null, drumTyre: false });
+const fresh = (): State => ({
+  badge: false, clock: 0, seq: 0, last: null, online: true, drum: "empty", label: null,
+  counted: [], onCart: [], flagged: 0, unattributed: 0, labels: 0, alerts: 0, log: [], fx: null, move: null,
+});
 
 const clock = (m: number) => {
   const t = 6 * 60 + m;
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };
+const serialOf = (n: number) => `GT-2611-${String(n).padStart(4, "0")}`;
+/* time stamps for effects, kept outside the component so render stays pure */
+const stamp = () => performance.now();
+const fxOf = (kind: string): Fx => ({ kind, t0: stamp() });
 
-type Focus = "none" | "bm" | "cart" | "press";
+type Focus = "none" | "bm" | "cart";
 const WALK: { title: string; body: string; action: string; result?: string; focus: Focus }[] = [
   {
     focus: "none", title: "Follow one green tyre",
-    body: "This is a building area, a green tyre cart and four curing presses. Step through how one tyre is counted, then try to cheat the count yourself.",
+    body: "This is a building area on line PL-1. Step through how one green tyre is counted at the building machine, then try to cheat the count yourself.",
     action: "Start",
   },
   {
-    focus: "bm", title: "The builder signs in",
-    body: "At the start of the shift the tyre builder taps their badge at machine BM-01. Every tyre built on this machine is now credited to badge 1042.",
-    action: "Tap badge", result: "Signed in. BM-01 is crediting its tyres to badge 1042.",
+    focus: "bm", title: "The operator signs in",
+    body: "At the start of the shift the operator taps their badge at building machine BM-01. Every count from this machine is now linked to badge 1042, K. Perera.",
+    action: "Tap badge", result: "Signed in. BM-01 links its counts to K. Perera, badge 1042.",
   },
   {
-    focus: "bm", title: "A tyre is built",
-    body: "A tyre is only counted when two separate signals agree: the machine reports the build cycle is complete, and the sensor at the unload point sees a real tyre come off the drum.",
-    action: "Complete the build", result: "Both signals agree, so the tyre is counted. BM-01 now reads 1.",
+    focus: "bm", title: "The tyre is built",
+    body: "The operator builds the green tyre on the drum as usual. Nothing is counted yet: the count waits for the auto-stitch.",
+    action: "Build the tyre", result: "The green tyre is on the drum. BM-01 still reads 0.",
   },
   {
-    focus: "bm", title: "Its label prints by itself",
-    body: "The moment a tyre is counted, a label with its own number prints at the machine. Labels are never printed any other way.",
-    action: "Apply the label", result: "GT-0001 is on the tyre. That number follows it to the press.",
+    focus: "bm", title: "The auto-stitch is the count",
+    body: "The machine stitches the layers together automatically. Tyode reads that stitch from the machine's PLC signal, or from the stitch signal or button if there is no PLC. It only reads, it never changes the machine.",
+    action: "Run the auto-stitch", result: `Stitch at 06:21. A badge is logged in and there was no stitch in the last ${MIN_GAP} minutes, so it counts. BM-01 now reads 1.`,
   },
   {
-    focus: "cart", title: "It waits on the cart",
-    body: "The green tyre goes onto the cart as it does today. The only new steps for the builder are the badge tap and the label.",
-    action: "Move to the cart", result: "GT-0001 is on the cart, waiting to be cured.",
+    focus: "bm", title: "Its label prints",
+    body: "The moment the stitch is counted, a label with the tyre's own number prints at the machine. Labels never print any other way.",
+    action: "Apply the label", result: `${serialOf(1)} is on the tyre. That number is its ID for the rest of its passport.`,
   },
   {
-    focus: "press", title: "It is scanned into a press",
-    body: "The press operator scans the label while loading. This is a second, separate count, taken by different people at a different station.",
-    action: "Load into press P-02", result: "Built 1, loaded 1. The two counts match.",
+    focus: "cart", title: "It goes on to curing",
+    body: "The green tyre goes onto the cart as it does today. The only new steps for the operator are the badge tap and the label.",
+    action: "Move to the cart", result: `${serialOf(1)} is on the cart. It is scanned again at the press, and its passport carries on.`,
   },
   {
-    focus: "none", title: "The check runs all shift",
-    body: "Built and loaded are compared continuously, per builder, machine and shift. If a counted tyre is never loaded, it is listed by its number.",
+    focus: "none", title: "Checked all shift",
+    body: "Every count has a stitch signal, a time and a badge behind it. Each counter sends a heartbeat every minute, and every flag is logged for the supervisor.",
     action: "Now try to cheat it",
   },
 ];
@@ -191,36 +198,34 @@ const WALK: { title: string; body: string; action: string; result?: string; focu
 type Scenario = { key: string; title: string; body: string; focus: Focus; steps: { action: string; result: string }[] };
 const SCENARIOS: Scenario[] = [
   {
-    key: "empty", focus: "bm", title: "Run the machine with no tyre",
-    body: "A builder cycles the machine without building a tyre, to raise their count.",
-    steps: [{ action: "Run an empty cycle", result: "The machine reported a cycle, but the unload sensor saw no tyre. Nothing was counted, and the attempt is flagged against badge 1042." }],
+    key: "again", focus: "bm", title: "Stitch again straight away",
+    body: "A builder runs the stitcher again a few minutes later, without building a new tyre, to push the count up.",
+    steps: [{ action: "Run the stitcher again", result: `The stitch came 4 minutes after the last one on BM-01. A tyre can't be built that fast, and the stitcher can't usefully run without one. Flagged, not counted.` }],
   },
   {
-    key: "sensor", focus: "bm", title: "Block the sensor by hand",
-    body: "Someone breaks the sensor beam by hand to fake a tyre coming off the drum.",
-    steps: [{ action: "Break the beam", result: "The sensor was triggered, but the machine had not completed a cycle. Nothing was counted, and the attempt is flagged." }],
-  },
-  {
-    key: "label", focus: "bm", title: "Print a spare label",
-    body: "Someone wants a spare label to stick on a tyre that was never counted.",
-    steps: [{ action: "Request a label", result: "Refused. Labels only print for a counted tyre, so there is never a spare label to use." }],
+    key: "nobadge", focus: "bm", title: "Stitch with no one signed in",
+    body: "A tyre is built and stitched before anyone taps a badge at the machine.",
+    steps: [
+      { action: "Sign out and build a tyre", result: "No badge is logged in at BM-01. A tyre is on the drum." },
+      { action: "Run the auto-stitch", result: "The stitch is real, but no badge is logged in. It is unattributed: not given to anyone until a supervisor approves it." },
+    ],
   },
   {
     key: "manual", focus: "bm", title: "Type in a higher count",
     body: "A builder tries to add tyres to their total on the machine screen.",
-    steps: [{ action: "Try to edit the count", result: "There is nowhere to enter a count. The number on screen comes only from the machine and the sensor." }],
+    steps: [{ action: "Try to edit the count", result: "There is nowhere to enter a count. Operators cannot type or change it. The number comes only from stitch signals." }],
   },
   {
-    key: "dup", focus: "press", title: "Scan the same tyre twice",
-    body: "A tyre that is already in a press is scanned again, to make the press count look higher.",
-    steps: [{ action: "Scan GT-0001 again", result: "GT-0001 was already loaded into P-02 at 06:12. Each label can only be loaded once, so this scan is rejected and flagged." }],
+    key: "label", focus: "bm", title: "Print a spare label",
+    body: "Someone wants a spare label to put on a tyre that was never counted.",
+    steps: [{ action: "Request a label", result: "Refused. A label only prints for a counted stitch, so there is never a spare one." }],
   },
   {
-    key: "missing", focus: "cart", title: "A tyre goes missing",
-    body: "A tyre is built and counted, then taken off the cart, and never reaches a press.",
+    key: "unplug", focus: "bm", title: "Unplug the counter",
+    body: "Someone unplugs the counter at BM-01, hoping nobody notices.",
     steps: [
-      { action: "Build a tyre, then take it away", result: "The new tyre was counted at BM-01 and labelled, then taken off the cart before it reached a press." },
-      { action: "Move the clock on 20 minutes", result: "It was not loaded within 20 minutes, so it is now listed as missing, with its number, the builder, the machine and the time it was built." },
+      { action: "Unplug the counter", result: "The counter stops sending its heartbeat." },
+      { action: "Wait 2 minutes", result: "No heartbeat for 2 minutes, so an alert goes to the supervisor. A counter can't be quietly unplugged." },
     ],
   },
 ];
@@ -228,24 +233,23 @@ const SCENARIOS: Scenario[] = [
 /* ---------- the floor drawing ---------- */
 
 function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
-  const fxOn = (k: string, from = 0, to = 2600) => st.fx && st.fx.kind === k && now - st.fx.t0 >= from && now - st.fx.t0 < to;
-  const fxIn = (k: string[]) => !!st.fx && k.includes(st.fx.kind) && now - st.fx.t0 < 4200;
-  const spinning = fxOn("build", 0, 1300) || fxOn("empty", 0, 1300);
-  const beamOk = fxOn("build", 1100, 2600);
-  const beamBad = fxOn("sensor", 0, 2600);
-  const cycleLamp = spinning;
+  const age = st.fx ? now - st.fx.t0 : 1e9;
+  const on = (k: string | string[], from = 0, to = 2600) => !!st.fx && (Array.isArray(k) ? k.includes(st.fx.kind) : st.fx.kind === k) && age >= from && age < to;
+  const stitching = on(["stitch", "again", "nbstitch"], 0, 1700);
+  const spinning = stitching || on(["build", "nbbuild"], 0, 1400);
+  const signal = on(["stitch", "again", "nbstitch"], 700, 2200);
   const moving = st.move && now - st.move.t0 < st.move.dur ? st.move : null;
-  const onCart = st.tyres.filter((t) => t.at === "cart" && t.serial !== moving?.serial);
-  const inPress = (p: PressId) => st.tyres.some((t) => t.at === "press" && t.press === p && t.serial !== moving?.serial);
-  const counted = st.tyres.length - (fxOn("build", 0, 1100) ? 1 : 0);
   const dim = (f: Focus) => (focus === "none" || focus === f ? 1 : 0.38);
+  const showDrumTyre = st.drum !== "empty";
 
   const building = (id: keyof typeof BM, active: boolean) => {
     const { x: bx, y: by } = BM[id];
-    const ang = spinning && active ? (now / 90) % (Math.PI * 2) : 0.4;
+    const ang = spinning && active ? (now / 80) % (Math.PI * 2) : 0.4;
     const [dcx, dcy] = P(bx + 12.5, by + 6, 6);
-    const showTyre = active && st.drumTyre;
-    const b1 = P(bx + 17.8, by + 2.6, 3), b2 = P(bx + 17.8, by + 9.4, 3);
+    const reach = active && stitching ? Math.min(1, age / 350) * (age > 1350 ? Math.max(0, 1 - (age - 1350) / 350) : 1) : 0;
+    const ry = by + 11.2 - reach * 1.5;
+    const led = active ? (st.online ? { top: "#9fe3bd", left: "#1f9d5a", right: "#178048" } : { top: "#ff9a9d", left: "#d92d33", right: "#b8262b" }) : { top: "#9fe3bd", left: "#1f9d5a", right: "#178048" };
+    const [cx1, cy1] = P(bx + 2.4, by + 10.6, 7.2), [hx, hy] = P(bx + 3.5, by + 5.6, 9);
     return (
       <g key={id}>
         <polygon points={pts([bx - 1, by - 7, 0], [bx + 23, by - 7, 0], [bx + 23, by + 17, 0], [bx - 1, by + 17, 0])} fill="rgb(0 0 0 / .035)" />
@@ -253,14 +257,16 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
         <Box x={bx + 6} y={by - 5.5} w={10} d={4.5} h={8.5} />
         <XCyl x0={bx + 6.8} x1={bx + 15.2} cy={by - 0.6} cz={6.6} r={1.1} side="#4a4d54" face="#5d6068" />
         <XCyl x0={bx + 6.8} x1={bx + 15.2} cy={by - 0.6} cz={3.6} r={1.1} side="#4a4d54" face="#5d6068" />
-        <line x1={P(bx + 10, by - 0.2, 7.4)[0]} y1={P(bx + 10, by - 0.2, 7.4)[1]} x2={P(bx + 10, by + 3, 8.8)[0]} y2={P(bx + 10, by + 3, 8.8)[1]} stroke="#3d4046" strokeWidth="2" />
         {/* base, headstock, drum, tailstock */}
         <Box x={bx} y={by} w={20} d={12} h={0.5} m={STEEL} />
         <Box x={bx + 1} y={by + 2} z={0.5} w={5} d={8} h={10} />
-        <Box x={bx + 2} y={by + 3} z={10.5} w={1.2} d={1.2} h={1.2} m={cycleLamp && active ? { top: "#ffd27a", left: "#f5a524", right: "#d98b14" } : STEEL} />
+        <Box x={bx + 2} y={by + 3} z={10.5} w={1.2} d={1.2} h={1.2} m={spinning && active ? { top: "#ffd27a", left: "#f5a524", right: "#d98b14" } : STEEL} />
         <XCyl x0={bx + 6} x1={bx + 12.5} cy={by + 6} cz={6} r={3.1} side="#8b9098" face="#a7acb4" />
-        {showTyre && <XCyl x0={bx + 6.5} x1={bx + 12} cy={by + 6} cz={6} r={3.6} hole={3.1} side="#26282c" face={RUBBER} />}
-        {active && (spinning || showTyre) && (
+        {active && showDrumTyre && <XCyl x0={bx + 6.5} x1={bx + 12} cy={by + 6} cz={6} r={3.6} hole={3.1} side="#26282c" face={RUBBER} />}
+        {active && st.drum === "labelled" && !moving && (
+          <polygon className={s.labelOut} points={pts([bx + 12.02, by + 3.3, 7.6], [bx + 12.02, by + 4.4, 7.6], [bx + 12.02, by + 4.4, 6.9], [bx + 12.02, by + 3.3, 6.9])} fill="#fff" {...LINE} />
+        )}
+        {active && spinning && (
           <g stroke="rgb(255 255 255 / .55)" strokeWidth="1">
             {[0, 1, 2].map((k) => {
               const a = ang + (k * Math.PI * 2) / 3;
@@ -271,19 +277,22 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
         )}
         <XCyl x0={bx + 12.5} x1={bx + 13.6} cy={by + 6} cz={6} r={0.6} side={STEEL.right} face={STEEL.top} />
         <Box x={bx + 13.6} y={by + 4.2} z={0.5} w={2} d={3.6} h={7.6} />
-        {/* unload sensor: light curtain across the exit */}
-        <Box x={bx + 17.5} y={by + 2} z={0.5} w={0.6} d={0.6} h={6} m={STEEL} />
-        <line x1={b1[0]} y1={b1[1]} x2={b2[0]} y2={b2[1]}
-          className={active && (beamOk || beamBad) ? s.beamOn : s.beamOff}
-          stroke={active && beamBad ? "#d92d33" : active && beamOk ? "#1f9d5a" : "rgb(28 30 34 / .3)"} />
-        <Box x={bx + 17.5} y={by + 9.4} z={0.5} w={0.6} d={0.6} h={6} m={STEEL} />
+        {/* the auto-stitcher: rollers that press in against the tyre */}
+        <Box x={bx + 8.2} y={by + 12.2} z={0.5} w={2.4} d={1.6} h={4.4} m={STEEL} />
+        <Box x={bx + 8.6} y={ry - 0.2} z={4.9} w={1.6} d={by + 12.4 - ry} h={0.6} m={DARK} />
+        <XCyl x0={bx + 8.4} x1={bx + 10.4} cy={ry} cz={5.2} r={0.55} side="#3d4046" face="#5d6068" />
+        {/* the counter: an edge device reading the stitch signal, with its heartbeat light */}
+        <Box x={bx + 1.6} y={by + 10.2} z={6.2} w={1.6} d={0.7} h={1.3} m={DARK} />
+        <Box x={bx + 2.05} y={by + 10.82} z={6.75} w={0.5} d={0.12} h={0.4} m={led} />
+        {active && st.online && <circle key={`beat-${Math.floor(now / 1000)}`} className={s.beat} cx={cx1} cy={cy1} r="3" />}
+        {active && signal && <line className={s.beamOn} x1={hx} y1={hy} x2={cx1} y2={cy1} stroke="#1f9d5a" strokeDasharray="2 2" />}
         {/* builder platform, HMI with badge reader, label printer */}
-        <Box x={bx + 4.5} y={by + 12.4} w={10} d={3.6} h={0.35} m={STEEL} />
+        <Box x={bx + 4.5} y={by + 12.4} w={3.4} d={3.6} h={0.35} m={STEEL} />
         <Box x={bx + 16} y={by + 12.6} w={0.6} d={0.6} h={8} m={STEEL} />
         <Box x={bx + 14.8} y={by + 12.7} z={8} w={3} d={0.5} h={2.4} m={{ top: "#50535a", left: active && st.badge ? "#1d3b5c" : "#2e3035", right: "#303237" }} />
         <Box x={bx + 16.7} y={by + 12.6} z={5.4} w={0.8} d={0.4} h={1.1} m={active && st.badge ? { top: "#cfe8da", left: "#1f9d5a", right: "#178048" } : WHITE} />
         <Box x={bx + 19} y={by + 12.6} w={2.4} d={2.2} h={4} />
-        {active && fxOn("build", 1300, 4000) && (
+        {active && on(["stitch", "nbstitch"], 1500, 4200) && (
           <polygon className={s.labelOut} points={pts([bx + 19.4, by + 14.82, 3.3], [bx + 21, by + 14.82, 3.3], [bx + 21, by + 14.82, 2.2], [bx + 19.4, by + 14.82, 2.2])} fill="#fff" {...LINE} />
         )}
       </g>
@@ -292,6 +301,7 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
 
   const cart = () => {
     const { x, y } = CART;
+    const list = st.onCart.filter((x2) => x2 !== moving?.serial);
     return (
       <g key="cart">
         <polygon points={pts([x - 1, y - 1, 0], [x + 14, y - 1, 0], [x + 14, y + 6, 0], [x - 1, y + 6, 0])} fill="rgb(0 0 0 / .035)" />
@@ -301,10 +311,10 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
         <Box x={x} y={y} z={0.8} w={13} d={5} h={0.4} m={STEEL} />
         <Box x={x} y={y + 2.2} z={1.2} w={0.5} d={0.6} h={8.4} m={STEEL} />
         <XCyl x0={x} x1={x + 13} cy={y + 2.5} cz={9.3} r={0.25} side={STEEL.right} face={STEEL.top} />
-        {onCart.map((t, i) => {
+        {list.map((serial, i) => {
           const [cx, cy, cz] = cartSlot(i);
           return (
-            <g key={t.serial}>
+            <g key={serial}>
               <line x1={P(cx + 0.6, cy, 9.3)[0]} y1={P(cx + 0.6, cy, 9.3)[1]} x2={P(cx + 0.6, cy, cz + 3.1)[0]} y2={P(cx + 0.6, cy, cz + 3.1)[1]} stroke="#555" strokeWidth="1" />
               <Ring x={cx} cy={cy} cz={cz} />
             </g>
@@ -315,75 +325,63 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
     );
   };
 
-  const press = (id: PressId) => {
-    const { x, y } = PRESSES[id];
-    const dup = id === "P-02" && fxOn("dup", 0, 4200);
-    const scan = id === "P-02" && fxOn("scan", 0, 1800);
-    const [mx, my, mz] = mouldPos(id);
+  const press = (i: number) => {
+    const { x, y } = PRESSES[i];
+    const [mx, my] = [x + 5.5, y + 4.5];
     return (
-      <g key={id}>
-        <polygon points={pts([x - 5, y - 1, 0], [x + 14, y - 1, 0], [x + 14, y + 10, 0], [x - 5, y + 10, 0])} fill="rgb(0 0 0 / .035)" />
+      <g key={i}>
+        <polygon points={pts([x - 1, y - 1, 0], [x + 14, y - 1, 0], [x + 14, y + 10, 0], [x - 1, y + 10, 0])} fill="rgb(0 0 0 / .035)" />
         <Box x={x} y={y} w={11} d={9} h={3.2} />
         <Box x={x + 0.4} y={y + 0.4} z={3.2} w={1} d={1} h={10} m={STEEL} />
         <Box x={x + 9.6} y={y + 0.4} z={3.2} w={1} d={1} h={10} m={STEEL} />
         <VCyl cx={mx} cy={my} z={3.2} r={3.4} h={1.4} top="#b9bec5" side="#a3a8b0" />
-        {inPress(id) && <FlatTyre cx={mx} cy={my} z={mz} />}
+        <FlatTyre cx={mx} cy={my} z={4.6} />
         <VCyl cx={mx} cy={my} z={8.6} r={3.4} h={1.6} top="#c9cdd3" side="#a3a8b0" />
         <Box x={x + 0.4} y={y + 7.6} z={3.2} w={1} d={1} h={10} m={STEEL} />
         <Box x={x + 9.6} y={y + 7.6} z={3.2} w={1} d={1} h={10} m={STEEL} />
         <Box x={x} y={y} z={13.2} w={11} d={9} h={2} />
         <VCyl cx={mx} cy={my} z={15.2} r={1.4} h={1.8} top="#d6d9de" side="#b8bcc3" />
-        <Box x={x + 11.3} y={y + 1} w={2.2} d={3.5} h={8} />
-        <Box x={x + 11.9} y={y + 1.6} z={8} w={0.8} d={0.8} h={0.8} m={dup ? { top: "#ff9a9d", left: "#d92d33", right: "#b8262b" } : { top: "#9fe3bd", left: "#1f9d5a", right: "#178048" }} />
-        {/* label scanner at the loading point */}
-        <Box x={x - 4} y={y + 7} w={0.5} d={0.5} h={6.5} m={STEEL} />
-        <Box x={x - 4.4} y={y + 6.6} z={6.5} w={1.3} d={1.3} h={1} m={DARK} />
-        {(scan || dup) && (
-          <polygon className={s.beamOn} points={pts([x - 3.8, y + 7.2, 6.6], [mx - 3, my + 1.5, mz + 0.6], [mx - 1, my + 3, mz + 0.6])}
-            fill={dup ? "rgb(217 45 51 / .35)" : "rgb(31 157 90 / .35)"} stroke="none" />
-        )}
       </g>
     );
   };
 
-  /* tyre in motion */
   let mover: React.ReactNode = null;
   if (moving) {
     const k = Math.min(1, (now - moving.t0) / moving.dur);
     const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     const p = moving.from.map((v, i) => v + (moving.to[i] - v) * e) as V3;
     p[2] += Math.sin(Math.PI * e) * 3;
-    mover = <Ring x={p[0]} cy={p[1]} cz={p[2]} opacity={moving.fade ? 1 - e * 0.9 : 1} />;
+    mover = <Ring x={p[0]} cy={p[1]} cz={p[2]} />;
   }
 
   /* readouts */
-  const bmTone = fxIn(["empty", "sensor"]) ? "warn" : fxIn(["label", "manual"]) ? "bad" : focus === "bm" ? "focus" : "plain";
-  const bmLines = fxIn(["manual"]) ? ["BM-01 · count is read-only", "Taken from machine and sensor"]
-    : fxIn(["label"]) ? ["BM-01 · label refused", "No counted tyre to label"]
-    : fxIn(["empty"]) && now - st.fx!.t0 > 1300 ? ["BM-01 · cycle, no tyre", "Not counted · flagged"]
-    : fxIn(["sensor"]) ? ["BM-01 · sensor, no cycle", "Not counted · flagged"]
-    : [`BM-01 · ${st.badge ? "badge 1042" : "no one signed in"}`, `Count ${Math.max(0, counted)}${fxOn("build", 1300, 4000) ? ` · label ${st.tyres[st.tyres.length - 1]?.serial}` : ""}`];
-  const missingTyre = st.tyres.find((t) => t.at === "missing");
-  const loaded = (p: PressId) => st.tyres.filter((t) => t.press === p && t.at === "press").length;
+  const counted = st.counted.length;
+  const tone = on(["again"], 700, 4200) || on(["nbstitch"], 700, 4200) || on("unplug", 0, 9e9) ? "warn"
+    : on(["manual", "refuse", "alarm"], 0, 9e9) ? "bad" : focus === "bm" ? "focus" : "plain";
+  const lines = on("manual", 0, 9e9) ? ["BM-01 · count is read-only", "Comes only from stitch signals", "Counter online"]
+    : on("refuse", 0, 9e9) ? ["BM-01 · label refused", "No counted stitch to label", "Counter online"]
+    : on("again", 700, 9e9) ? ["BM-01 · stitch too soon", `${st.last !== null ? st.clock - st.last : 4} min after the last · flagged`, `Count ${counted}`]
+    : on("nbstitch", 700, 9e9) ? ["BM-01 · no badge logged in", "Unattributed · needs approval", `Count ${counted}`]
+    : on("alarm", 0, 9e9) ? ["BM-01 · counter offline", "No heartbeat for 2 min", "Alert sent to supervisor"]
+    : on("unplug", 0, 9e9) ? ["BM-01 · counter offline", "No heartbeat", `Count ${counted}`]
+    : [`BM-01 · ${st.badge ? "K. Perera · 1042" : "no one signed in"}`, `Count ${counted}${on("stitch", 1500, 4200) ? ` · label ${st.label}` : ""}`, st.online ? "Counter online · heartbeat" : "Counter offline"];
 
-  const [l1x, l1y] = P(BM["BM-01"].x + 3.5, BM["BM-01"].y + 4, 12.8);
+  const [l1x, l1y] = P(BM["BM-01"].x + 3.5, BM["BM-01"].y + 4, 10.6);
   const [l2x, l2y] = P(BM["BM-02"].x + 3.5, BM["BM-02"].y + 4, 11);
   const [lcx, lcy] = P(CART.x + 6.5, CART.y + 2.5, 10.5);
-  const [lpx, lpy] = P(PRESSES["P-02"].x + 5.5, PRESSES["P-02"].y + 4.5, 17.4);
+  const [lpx, lpy] = P(PRESSES[1].x + 5.5, PRESSES[1].y + 4.5, 17.4);
 
   return (
-    <svg className={s.scene} viewBox="0 48 930 618" role="img" aria-label="Plant floor drawing: two tyre building machines, a green tyre cart and four curing presses">
+    <svg className={s.scene} viewBox="0 48 930 618" role="img" aria-label="Plant floor drawing: two tyre building machines with auto-stitchers and counters, a green tyre cart and curing presses">
       <defs>
         <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="matrix(0.866 0.5 -0.866 0.5 0 0)">
           <path d="M12 0H0V12" fill="none" stroke="rgb(28 30 34 / .05)" strokeWidth="0.6" />
         </pattern>
       </defs>
-      {/* floor slab */}
       <polygon points={pts([0, FD, 0], [FW, FD, 0], [FW, FD, -1.2], [0, FD, -1.2])} fill="#d7d9dd" {...LINE} />
       <polygon points={pts([FW, 0, 0], [FW, FD, 0], [FW, FD, -1.2], [FW, 0, -1.2])} fill="#c7cad0" {...LINE} />
       <polygon points={pts([0, 0, 0], [FW, 0, 0], [FW, FD, 0], [0, FD, 0])} fill="#eceef1" {...LINE} />
       <polygon points={pts([0, 0, 0], [FW, 0, 0], [FW, FD, 0], [0, FD, 0])} fill="url(#grid)" />
-      {/* walkway markings */}
       {[32.5, 35.5, 62.5, 65.5].map((x) => (
         <polygon key={x} points={pts([x, 0.5, 0], [x + 0.3, 0.5, 0], [x + 0.3, FD - 0.5, 0], [x, FD - 0.5, 0])} fill="#e0b43c" opacity=".85" />
       ))}
@@ -391,17 +389,13 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
       <g opacity={dim("bm")} className={s.fade}>{building("BM-01", true)}</g>
       <g opacity={focus === "none" ? 1 : 0.38} className={s.fade}>{building("BM-02", false)}</g>
       <g opacity={dim("cart")} className={s.fade}>{cart()}</g>
-      {(Object.keys(PRESSES) as PressId[]).map((id) => (
-        <g key={id} opacity={id === "P-02" ? dim("press") : focus === "none" ? 1 : 0.38} className={s.fade}>{press(id)}</g>
-      ))}
+      <g opacity={focus === "none" ? 0.85 : 0.3} className={s.fade}>{[0, 1, 2, 3].map(press)}</g>
       {mover}
 
-      <Tag x={l1x} y={l1y} lines={bmLines} tone={bmTone as "plain"} />
+      <Tag x={l1x} y={l1y} lines={lines} tone={tone as "plain"} />
       <Tag x={l2x} y={l2y} lines={["BM-02", "Idle in this demo"]} />
-      <Tag x={lcx} y={lcy} tone={missingTyre && fxIn(["missing"]) ? "warn" : focus === "cart" ? "focus" : "plain"}
-        lines={missingTyre && fxIn(["missing"]) ? [`${missingTyre.serial} missing`, `Built ${clock(missingTyre.builtAt)} · never loaded`] : ["Green tyre cart", `${onCart.length} waiting`]} />
-      <Tag x={lpx} y={lpy} tone={fxIn(["dup"]) ? "bad" : focus === "press" ? "focus" : "plain"}
-        lines={fxIn(["dup"]) ? ["P-02 · scan rejected", "GT-0001 already loaded"] : [`P-02 · ${loaded("P-02")} loaded`, st.tyres.find((t) => t.press === "P-02")?.serial ?? "Waiting"]} />
+      <Tag x={lcx} y={lcy} tone={focus === "cart" ? "focus" : "plain"} lines={["Green tyre cart", `${st.onCart.length} waiting`]} />
+      <Tag x={lpx} y={lpy} lines={["Curing presses", "Scanned in at loading"]} />
     </svg>
   );
 }
@@ -418,49 +412,38 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
   const [scenStep, setScenStep] = useState(0);
   const [scenDone, setScenDone] = useState<Record<string, boolean>>({});
   const timers = useRef<number[]>([]);
-  const busy = !!(st.move && now - st.move.t0 < st.move.dur) || !!(st.fx && now - st.fx.t0 < 1400);
+  const busy = !!(st.move && now - st.move.t0 < st.move.dur) || !!(st.fx && now - st.fx.t0 < 1500);
 
-  /* animation frames only while something is moving */
+  /* animation frames only while something is moving (the heartbeat light keeps a slow tick going) */
   useEffect(() => {
-    const active = (st.fx && performance.now() - st.fx.t0 < 4400) || (st.move && performance.now() - st.move.t0 < st.move.dur + 100);
-    if (!active) return;
-    let raf = 0;
-    const loop = () => { setNow(performance.now()); raf = requestAnimationFrame(loop); };
+    let raf = 0, last = 0;
+    const loop = (t: number) => {
+      const active = (st.fx && t - st.fx.t0 < 4400) || (st.move && t - st.move.t0 < st.move.dur + 100);
+      if (active || t - last > 500) { setNow(t); last = t; }
+      raf = requestAnimationFrame(loop);
+    };
     raf = requestAnimationFrame(loop);
-    const stop = window.setTimeout(() => { cancelAnimationFrame(raf); setNow(performance.now()); }, 4500);
-    return () => { cancelAnimationFrame(raf); window.clearTimeout(stop); };
+    return () => cancelAnimationFrame(raf);
   }, [st.fx, st.move]);
 
-  const later = (ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)); };
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   const log = (x: State, kind: LogKind, text: string): State =>
     ({ ...x, log: [{ id: x.log.length + 1, t: x.clock, kind, text }, ...x.log] });
-  const fx = (kind: string): Fx => ({ kind, t0: performance.now() });
 
-  const build = (x: State, at: number): State => {
-    const serial = `GT-${String(x.seq + 1).padStart(4, "0")}`;
-    let n: State = { ...x, clock: Math.max(x.clock, at), seq: x.seq + 1, drumTyre: true, fx: fx("build"),
-      tyres: [...x.tyres, { serial, builtAt: Math.max(x.clock, at), at: "drum" }] };
-    n = log(n, "ok", `${serial} built on BM-01, badge 1042. Cycle and sensor agree, counted and labelled.`);
-    return n;
+  /* a valid stitch: counted, and a label prints */
+  const countStitch = (x: State, at: number): State => {
+    const serial = serialOf(x.seq + 1);
+    const n: State = { ...x, clock: at, last: at, seq: x.seq + 1, label: serial, labels: x.labels + 1, fx: fxOf("stitch"),
+      counted: [...x.counted, { serial, builtAt: at }] };
+    return log(n, "ok", `Stitch on BM-01, badge 1042. At least ${MIN_GAP} min since the last one. Counted, label ${serial} printed.`);
   };
-  const moveTo = (x: State, serial: string, from: V3, to: V3, where: Where, extra: Partial<Tyre> = {}, fade = false): State => ({
-    ...x, drumTyre: where === "cart" || where === "gone" ? false : x.drumTyre,
-    move: { serial, from, to, t0: performance.now(), dur: 1300, fade },
-    tyres: x.tyres.map((t) => (t.serial === serial ? { ...t, at: where, ...extra } : t)),
-  });
 
-  /* complete setup so the cheats can be tried straight away */
   const setupState = (): State => {
     let x = fresh();
-    x = { ...x, badge: true };
-    x = log(x, "info", "Badge 1042 signed in at BM-01.");
-    x = build(x, 8);
-    x = { ...x, drumTyre: false, fx: null, clock: 12 };
-    x = { ...x, tyres: x.tyres.map((t) => ({ ...t, at: "press" as Where, press: "P-02" as PressId, loadedAt: 12 })) };
-    x = log(x, "ok", "GT-0001 scanned into P-02. Matches its build on BM-01.");
-    return x;
+    x = log({ ...x, badge: true, clock: 6 }, "info", "Badge 1042 (K. Perera) signed in at BM-01.");
+    x = { ...countStitch(x, 21), fx: null, drum: "empty", onCart: [serialOf(1)] };
+    return log(x, "info", `${serialOf(1)} moved to the green tyre cart.`);
   };
 
   const runWalk = () => {
@@ -471,15 +454,13 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
     setDone(true);
     setSt((x) => {
       switch (step) {
-        case 1: return log({ ...x, badge: true, fx: fx("badge") }, "info", "Badge 1042 signed in at BM-01.");
-        case 2: return build(x, 8);
-        case 3: return { ...x, fx: fx("labelOn") };
-        case 4: return log(moveTo({ ...x, clock: 9 }, "GT-0001", drumPos(), cartSlot(0), "cart"), "info", "GT-0001 placed on the green tyre cart.");
+        case 1: return log({ ...x, badge: true, clock: 6, fx: fxOf("badge") }, "info", "Badge 1042 (K. Perera) signed in at BM-01.");
+        case 2: return log({ ...x, drum: "built", clock: 14, fx: fxOf("build") }, "info", "Green tyre built on the BM-01 drum. Not counted yet.");
+        case 3: return countStitch(x, 21);
+        case 4: return { ...x, drum: "labelled", fx: fxOf("labelOn") };
         case 5: {
-          let n = moveTo({ ...x, clock: 12 }, "GT-0001", cartSlot(0), mouldPos("P-02"), "press", { press: "P-02", loadedAt: 12 });
-          n = log(n, "ok", "GT-0001 scanned into P-02. Matches its build on BM-01.");
-          later(1300, () => setSt((y) => ({ ...y, fx: fx("scan") })));
-          return n;
+          const n: State = { ...x, clock: 22, drum: "empty", onCart: [...x.onCart, serialOf(1)], move: { serial: serialOf(1), from: drumPos(), to: cartSlot(x.onCart.length), t0: stamp(), dur: 1300 } };
+          return log(n, "info", `${serialOf(1)} placed on the green tyre cart.`);
         }
       }
       return x;
@@ -491,23 +472,19 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
     const k = scen.key, i = scenStep;
     setSt((x) => {
       switch (k) {
-        case "empty": return log({ ...x, clock: Math.max(x.clock, 15), flags: x.flags + 1, fx: fx("empty") }, "warn", "BM-01 cycled with no tyre at the sensor. Not counted, flagged against badge 1042.");
-        case "sensor": return log({ ...x, clock: Math.max(x.clock, 16), flags: x.flags + 1, fx: fx("sensor") }, "warn", "BM-01 sensor triggered without a machine cycle. Not counted, flagged.");
-        case "label": return log({ ...x, clock: Math.max(x.clock, 17), flags: x.flags + 1, fx: fx("label") }, "bad", "Label requested at BM-01 with no counted tyre. Refused.");
-        case "manual": return log({ ...x, clock: Math.max(x.clock, 18), flags: x.flags + 1, fx: fx("manual") }, "bad", "Attempt to change the count at BM-01. The count is read-only.");
-        case "dup": return log({ ...x, clock: Math.max(x.clock, 19), flags: x.flags + 1, fx: fx("dup") }, "bad", "GT-0001 scanned again at P-02. Already loaded at 06:12, rejected.");
-        case "missing":
-          if (i === 0) {
-            const n = build(x, 20);
-            const serial = n.tyres[n.tyres.length - 1].serial;
-            later(1500, () => setSt((y) => log(moveTo(y, serial, drumPos(), cartSlot(0), "cart"), "info", `${serial} placed on the cart.`)));
-            later(3100, () => setSt((y) => log(moveTo(y, serial, cartSlot(0), [CART.x + 4, CART.y + 22, 2], "gone", {}, true), "info", `${serial} taken off the cart.`)));
-            return n;
-          }
-          return log({
-            ...x, clock: Math.max(x.clock + 20, 40), flags: x.flags, fx: fx("missing"),
-            tyres: x.tyres.map((t) => (t.at === "gone" ? { ...t, at: "missing" as Where } : t)),
-          }, "warn", `${x.tyres.find((t) => t.at === "gone")?.serial ?? "A tyre"} not loaded within 20 minutes. Listed as missing: BM-01, badge 1042, built ${clock(x.tyres.find((t) => t.at === "gone")?.builtAt ?? 20)}.`);
+        case "again": {
+          const at = (x.last ?? 21) + 4;
+          return log({ ...x, clock: at, flagged: x.flagged + 1, fx: fxOf("again") }, "warn", `Stitch on BM-01 only 4 min after the last one. Flagged against badge 1042, not counted.`);
+        }
+        case "nobadge":
+          if (i === 0) return log({ ...x, badge: false, drum: "built", clock: Math.max(x.clock, (x.last ?? 21) + 10), fx: fxOf("nbbuild") }, "info", "Badge 1042 signed out at BM-01. A tyre is built on the drum.");
+          return log({ ...x, clock: Math.max(x.clock + 8, (x.last ?? 21) + MIN_GAP + 2), unattributed: x.unattributed + 1, labels: x.labels + 1, seq: x.seq + 1,
+            label: serialOf(x.seq + 1), drum: "empty", fx: fxOf("nbstitch") }, "warn", `Stitch on BM-01 with no badge logged in. Unattributed, label ${serialOf(x.seq + 1)} printed, waiting for supervisor approval.`);
+        case "manual": return log({ ...x, clock: x.clock + 1, flagged: x.flagged + 1, fx: fxOf("manual") }, "bad", "Attempt to change the count at BM-01. The count is read-only. Logged.");
+        case "label": return log({ ...x, clock: x.clock + 1, fx: fxOf("refuse") }, "bad", "Label requested at BM-01 with no counted stitch. Refused. Logged.");
+        case "unplug":
+          if (i === 0) return log({ ...x, online: false, clock: x.clock + 1, fx: fxOf("unplug") }, "warn", "BM-01 counter stopped sending its heartbeat.");
+          return log({ ...x, clock: x.clock + 2, alerts: x.alerts + 1, fx: fxOf("alarm") }, "bad", "No heartbeat from the BM-01 counter for 2 minutes. Alert sent to the shift supervisor.");
       }
       return x;
     });
@@ -519,14 +496,19 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
     }
   };
 
+  /* leave every scenario with the machine back to normal: badge in, counter plugged in */
+  const tidy = (x: State): State => {
+    let n = x;
+    if (!n.online) n = log({ ...n, online: true, fx: null }, "info", "BM-01 counter plugged back in. Heartbeat restored.");
+    if (!n.badge) n = log({ ...n, badge: true, fx: null }, "info", "Badge 1042 signed in again at BM-01.");
+    return { ...n, drum: "empty" };
+  };
   const openScenario = (sc: Scenario) => {
-    if (!st.tyres.some((t) => t.at === "press")) setSt(setupState());
-    if (sc.key === "missing" && scenDone.missing) {
-      setSt((x) => ({ ...x, tyres: x.tyres.filter((t) => t.at !== "missing" && t.at !== "gone") }));
-    }
+    setSt((x) => tidy(x.counted.length ? x : setupState()));
     setScen(sc); setScenStep(0); setMode("scenario");
     setScenDone((d) => { const n = { ...d }; Object.keys(n).filter((q) => q.startsWith(sc.key)).forEach((q) => delete n[q]); return n; });
   };
+  const backToMenu = () => { setSt((x) => tidy({ ...x, fx: null })); setMode("menu"); };
 
   const restart = useCallback(() => {
     timers.current.forEach((t) => window.clearTimeout(t)); timers.current = [];
@@ -534,14 +516,11 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
   }, []);
 
   const focus: Focus = mode === "walk" ? WALK[step].focus : mode === "scenario" && scen ? scen.focus : "none";
-  const built = st.tyres.length;
-  const loadedN = st.tyres.filter((t) => t.at === "press").length;
-  const missing = st.tyres.filter((t) => t.at === "missing");
-  const waiting = built - loadedN - missing.length;
   const walkStep = WALK[step];
   const lastScenResult = scen ? (scenDone[`${scen.key}-${scen.steps.length - 1}`] ? scen.steps[scen.steps.length - 1].result
     : scenStep > 0 ? scen.steps[scenStep - 1].result : null) : null;
   const scenFinished = scen ? !!scenDone[scen.key] : false;
+  const flags = st.log.filter((e) => e.kind === "warn" || e.kind === "bad");
 
   return (
     <div className={embedded ? `${s.page} ${s.embedded}` : s.page}>
@@ -555,18 +534,18 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
 
       {!embedded && <section className={s.intro}>
         <h1>Automatic green tyre counting</h1>
-        <p>Counted from the machine, labelled at the build, checked again at the press. No count is ever entered by hand.</p>
+        <p>Counted from the building machine&apos;s auto-stitch, linked to the operator&apos;s badge. Operators cannot type or change the count.</p>
       </section>}
 
       <div className={s.layout}>
         <div className={s.sceneCard}>
           <Floor st={st} now={now} focus={focus} />
           <div className={s.counts}>
-            <div><b>{built}</b><span>Built and counted</span></div>
-            <div><b>{loadedN}</b><span>Loaded into presses</span></div>
-            <div><b>{waiting}</b><span>Not yet loaded</span></div>
-            <div className={missing.length ? s.cRed : ""}><b>{missing.length}</b><span>Missing</span></div>
-            <div className={st.flags ? s.cAmber : ""}><b>{st.flags}</b><span>Attempts flagged</span></div>
+            <div><b>{st.counted.length}</b><span>Counted (verified)</span></div>
+            <div className={st.flagged ? s.cAmber : ""}><b>{st.flagged}</b><span>Flagged attempts</span></div>
+            <div className={st.unattributed ? s.cAmber : ""}><b>{st.unattributed}</b><span>Unattributed</span></div>
+            <div><b>{st.labels}</b><span>Labels printed</span></div>
+            <div className={st.online ? "" : s.cRed}><b>{st.online ? "1/1" : "0/1"}</b><span>Counter online</span></div>
           </div>
         </div>
 
@@ -579,12 +558,12 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
               <span className={s.kicker}>{step === 0 ? "Walkthrough" : `Step ${step} of ${WALK.length - 1}`}</span>
               <h2>{walkStep.title}</h2>
               <p>{walkStep.body}</p>
-              {step === 3 && done && (
+              {step === 4 && done && (
                 <div className={s.labelCard} aria-label="Printed label">
-                  <span>Green tyre</span>
-                  <b>GT-0001</b>
+                  <span>Green tyre · line PL-1</span>
+                  <b>{serialOf(1)}</b>
                   <svg viewBox="0 0 120 22" aria-hidden="true">{Array.from({ length: 34 }, (_, i) => <rect key={i} x={i * 3.5} width={(i * 7) % 3 === 0 ? 2.2 : 1} height="22" />)}</svg>
-                  <em>BM-01 · badge 1042 · 06:08</em>
+                  <em>BM-01 · badge 1042 · 06:21</em>
                 </div>
               )}
               {done && walkStep.result && <div className={s.result}><i aria-hidden="true">✓</i>{walkStep.result}</div>}
@@ -605,7 +584,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
             <>
               <span className={s.kicker}>Try to cheat the count</span>
               <h2>Pick a way to cheat</h2>
-              <p>Each one acts out something that could go wrong on the floor. See how it is caught.</p>
+              <p>Each one acts out something that could happen on the floor. See how it is caught.</p>
               <div className={s.menu}>
                 {SCENARIOS.map((sc) => (
                   <button key={sc.key} type="button" onClick={() => openScenario(sc)} className={scenDone[sc.key] ? s.tried : ""}>
@@ -634,7 +613,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
                 {!scenFinished && (
                   <button type="button" className={s.primary} onClick={runScenario} disabled={busy}>{scen.steps[scenStep].action}</button>
                 )}
-                <button type="button" className={scenFinished ? s.primary : s.link} disabled={busy} onClick={() => setMode("menu")}>
+                <button type="button" className={scenFinished ? s.primary : s.link} disabled={busy} onClick={backToMenu}>
                   {scenFinished ? "Try another" : "Back to the list"}
                 </button>
               </div>
@@ -657,19 +636,17 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
           )}
         </div>
         <div className={s.card}>
-          <h3>Missing tyres</h3>
-          {missing.length === 0 ? <p className={s.small}>None. Every counted tyre has been loaded or is still within its 20 minutes.</p> : (
+          <h3>Flags for the supervisor</h3>
+          {flags.length === 0 ? <p className={s.small}>None yet. Anything that doesn&apos;t match a real, attributed stitch shows up here.</p> : (
             <ul className={s.missing}>
-              {missing.map((t) => (
-                <li key={t.serial}><b>{t.serial}</b><span>Built on BM-01 by badge 1042 at {clock(t.builtAt)}. Not loaded into any press.</span></li>
-              ))}
+              {flags.map((e) => <li key={e.id}><b>{clock(e.t)}</b><span>{e.text}</span></li>)}
             </ul>
           )}
           <h3 className={s.gap}>How it is installed</h3>
           <ul className={s.notes}>
-            <li>The machine&apos;s cycle signal is read only. Nothing changes machine settings.</li>
-            <li>A sensor or camera at the unload point confirms each tyre.</li>
-            <li>Labels print at the machine. Scanners sit at press loading.</li>
+            <li>Tyode reads the machine&apos;s auto-stitch: the PLC signal, or the stitch signal or button. Read only.</li>
+            <li>A badge reader and a label printer at each building machine.</li>
+            <li>Each counter sends a heartbeat every minute. Scrap is recorded separately.</li>
             <li>Runs alongside the current count until the plant approves the switch.</li>
           </ul>
         </div>

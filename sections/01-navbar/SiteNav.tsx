@@ -5,6 +5,7 @@ import { LOGO } from "@/components/brand/TyodeLogo";
 import TyodeMark from "@/components/brand/TyodeMark";
 import BookingModal from "@/components/booking/BookingModal";
 import { BOOKING_URL, openBooking } from "@/components/booking/booking";
+import { scrollBus } from "@/lib/scrollBus";
 import styles from "./SiteNav.module.css";
 
 /**
@@ -43,31 +44,17 @@ export default function SiteNav() {
   useEffect(() => {
     const nav = ref.current;
     if (!nav) return;
-    let raf = 0;
     let last = "";
     let lastK = "";
-    const update = () => {
-      raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-      const v = p.toFixed(4);
+
+    return scrollBus.subscribe((s) => {
+      const v = s.progress.toFixed(4);
       if (v !== last) nav.style.setProperty("--scroll", (last = v));
       // how far it has tightened: follows the scroll over the first stretch, eased
-      const t = Math.min(1, Math.max(0, window.scrollY / 420));
+      const t = Math.min(1, Math.max(0, s.y / 420));
       const k = (t * t * (3 - 2 * t)).toFixed(4);
       if (k !== lastK) nav.style.setProperty("--k", (lastK = k));
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
+    });
   }, []);
 
   // close the menu with Escape
@@ -79,10 +66,8 @@ export default function SiteNav() {
   }, [open]);
 
   const box = {
-    width: `${(LOGO.width + PAD * 2) * K}px`,
-    height: `${(LOGO.height + PAD * 2) * K}px`,
-    margin: `${-PAD * K}px`,
-    "--hair": `${(1 / K).toFixed(3)}px`,
+    width: `${(LOGO.width + PAD * 2) * K}px`, height: `${(LOGO.height + PAD * 2) * K}px`,
+    margin: `${-PAD * K}px`, "--hair": `${(1 / K).toFixed(3)}px`,
   } as CSSProperties;
 
   return (
