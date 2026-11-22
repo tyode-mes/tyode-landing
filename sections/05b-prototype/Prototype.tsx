@@ -80,22 +80,44 @@ export default function Prototype() {
       className={styles.section}
       aria-labelledby="prototype-title"
     >
-      <div className={styles.inner}>
+      <div className={styles.layout}>
         <header className={styles.head} data-reveal>
-          <div className={styles.headCopy}>
-            <p className={styles.kicker}>Concept · sample data</p>
-            <h2 id="prototype-title" className={styles.heading}>
-              <span className={styles.ln}>
-                <span>See the</span>
-              </span>
-              <span className={styles.ln}>
-                <span>prototype.</span>
-              </span>
-            </h2>
-          </div>
+          <p className={styles.kicker}>Concept · sample data</p>
+          <h2 id="prototype-title" className={styles.heading}>
+            <span className={styles.ln}>
+              <span>See the</span>
+            </span>
+            <span className={styles.ln}>
+              <span>prototype.</span>
+            </span>
+          </h2>
+        </header>
 
+        <ol className={styles.rail} data-reveal>
+          {SCREENS.map((screen, i) => {
+            const isActive = i === active;
+            return (
+              <li key={screen.id} className={styles.railItem}>
+                <button
+                  type="button"
+                  className={`${styles.tab} ${isActive ? styles.activeTab : ""}`}
+                  onClick={() => setActive(i)}
+                  aria-pressed={isActive}
+                >
+                  <span className={styles.tabHead}>
+                    <span className={styles.tabIndex}>{screen.id}</span>
+                    <span className={styles.tabTitle}>{screen.title}</span>
+                  </span>
+                  <span className={styles.tabCaption}>{screen.caption}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className={styles.ctaWrap} data-reveal>
           <Link href="/demo" className={styles.cta}>
-            <span className={styles.ctaLabel}>Open live demo</span>
+            <span>Open live demo</span>
             <span className={styles.ctaCircle} aria-hidden="true">
               <svg viewBox="0 0 16 16" fill="none">
                 <path
@@ -108,57 +130,54 @@ export default function Prototype() {
               </svg>
             </span>
           </Link>
-        </header>
+        </div>
 
         <div className={styles.stageWrap} data-reveal>
           <div className={styles.bezel}>
             <div className={styles.chrome}>
-              <div className={styles.dots} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-
-              <span className={styles.route}>{current.route}</span>
-
-              <div className={styles.chromeRight}>
+              <div className={styles.chromeMeta}>
                 <span className={styles.counter}>
                   {current.id} / 0{SCREENS.length}
                 </span>
-                <div className={styles.steppers}>
-                  <button
-                    type="button"
-                    className={styles.stepBtn}
-                    onClick={() => step(-1)}
-                    aria-label="Previous prototype screen"
-                  >
-                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path
-                        d="M9.75 3.5 5.25 8l4.5 4.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.stepBtn}
-                    onClick={() => step(1)}
-                    aria-label="Next prototype screen"
-                  >
-                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path
-                        d="M6.25 3.5 10.75 8l-4.5 4.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                <span className={styles.sep} aria-hidden="true">
+                  ·
+                </span>
+                <span className={styles.route}>{current.route}</span>
+              </div>
+
+              <div className={styles.steppers}>
+                <button
+                  type="button"
+                  className={styles.stepBtn}
+                  onClick={() => step(-1)}
+                  aria-label="Previous prototype screen"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M9.75 3.5 5.25 8l4.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={styles.stepBtn}
+                  onClick={() => step(1)}
+                  aria-label="Next prototype screen"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M6.25 3.5 10.75 8l-4.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
 
@@ -179,28 +198,6 @@ export default function Prototype() {
               ))}
             </div>
           </div>
-
-          <ol className={styles.rail}>
-            {SCREENS.map((screen, i) => {
-              const isActive = i === active;
-              return (
-                <li key={screen.id} className={styles.railItem}>
-                  <button
-                    type="button"
-                    className={`${styles.tab} ${isActive ? styles.activeTab : ""}`}
-                    onClick={() => setActive(i)}
-                    aria-pressed={isActive}
-                  >
-                    <span className={styles.tabHead}>
-                      <span className={styles.tabIndex}>{screen.id}</span>
-                      <span className={styles.tabTitle}>{screen.title}</span>
-                    </span>
-                    <span className={styles.tabCaption}>{screen.caption}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
         </div>
       </div>
     </section>
