@@ -116,63 +116,65 @@ export default function Prototype() {
           </div>
         </header>
 
-        <div className={styles.stage}>
-          <div
-            className={styles.track}
-            style={{ "--active": active } as CSSProperties}
-          >
+        <div className={styles.body}>
+          <ol className={styles.tabs} role="tablist" aria-label="Prototype screens">
             {SCREENS.map((screen, i) => {
               const isActive = i === active;
               return (
-                <figure
-                  key={screen.id}
-                  className={`${styles.slide} ${isActive ? styles.activeSlide : ""}`}
-                >
-                  <div className={styles.frame}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={screen.src}
-                      alt={screen.alt}
-                      width={1440}
-                      height={900}
-                      loading={i === 0 ? "eager" : "lazy"}
-                      decoding="async"
-                      className={styles.image}
-                    />
-                  </div>
-                  <figcaption className={styles.mobileCaption}>
-                    <span className={styles.capIndex}>{screen.id}</span>
-                    <strong className={styles.capTitle}>{screen.title}</strong>
+                <li key={screen.id} className={styles.tabItem} role="presentation">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`${styles.tab} ${isActive ? styles.activeTab : ""}`}
+                    onClick={() => setActive(i)}
+                  >
+                    <span className={styles.tabTop}>
+                      <span className={styles.capIndex}>{screen.id}</span>
+                      <span className={styles.capTitle}>{screen.title}</span>
+                    </span>
                     <span className={styles.capText}>{screen.caption}</span>
-                  </figcaption>
-                </figure>
+                  </button>
+                </li>
               );
             })}
+          </ol>
+
+          <div className={styles.stage}>
+            <div
+              className={styles.track}
+              style={{ "--active": active } as CSSProperties}
+            >
+              {SCREENS.map((screen, i) => {
+                const isActive = i === active;
+                return (
+                  <figure
+                    key={screen.id}
+                    className={`${styles.slide} ${isActive ? styles.activeSlide : ""}`}
+                  >
+                    <div className={styles.frame}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={screen.src}
+                        alt={screen.alt}
+                        width={1440}
+                        height={900}
+                        loading={i === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                        className={styles.image}
+                      />
+                    </div>
+                    <figcaption className={styles.mobileCaption}>
+                      <span className={styles.capIndex}>{screen.id}</span>
+                      <strong className={styles.capTitle}>{screen.title}</strong>
+                      <span className={styles.capText}>{screen.caption}</span>
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
           </div>
         </div>
-
-        <ol className={styles.tabs} role="tablist" aria-label="Prototype screens">
-          {SCREENS.map((screen, i) => {
-            const isActive = i === active;
-            return (
-              <li key={screen.id} className={styles.tabItem} role="presentation">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`${styles.tab} ${isActive ? styles.activeTab : ""}`}
-                  onClick={() => setActive(i)}
-                >
-                  <span className={styles.tabTop}>
-                    <span className={styles.capIndex}>{screen.id}</span>
-                    <span className={styles.capTitle}>{screen.title}</span>
-                  </span>
-                  <span className={styles.capText}>{screen.caption}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
       </div>
     </section>
   );
