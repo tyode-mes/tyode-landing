@@ -1,10 +1,16 @@
-/* Static markup for section 04 (how it works): copy, labels, passport. The 3D tyre is drawn into the canvas.
+/* Static markup for section 04 (how it works): copy, labels, passport. The 3D tyre (a solid tyre) is drawn into the canvas;
+   the "On a pneumatic line" note explains how the other line type differs and links to the walkthrough at /passport.
    Edit text here. Codes are sample data. */
 export const HOW_IT_WORKS_MARKUP = String.raw`
   <header class="h3-intro">
     <span class="h3-eyebrow">How it works</span>
     <h2 id="h3-title"><span class="ln"><span>Eight stages.</span></span><span class="ln"><span>One scan each.</span></span></h2>
-    <p>Every solid tyre gets an ID on its steel band. From there, each station adds what it knows, and the passport builds itself as the tyre moves through the plant.</p>
+    <p>The tyre below is a solid tyre. It gets an ID on its steel band, then each station adds what it knows, and the passport builds itself as the tyre moves through the plant.</p>
+    <div class="h3-alt">
+      <b>On a pneumatic line</b>
+      <span>There is no steel band. The ID is a printed label applied at the building machine, the count comes from the machine's own signal, and the tyre is cured in a bladder press. The passport builds the same way.</span>
+      <a href="/passport">Walk through a pneumatic line <i aria-hidden="true">&rarr;</i></a>
+    </div>
   </header>
 
   <div class="h3-scroll">
