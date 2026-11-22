@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import styles from "./Prototype.module.css";
 
@@ -46,6 +46,9 @@ const SCREENS: PrototypeScreen[] = [
 export default function Prototype() {
   const [active, setActive] = useState(0);
 
+  const step = (delta: number) =>
+    setActive((prev) => (prev + delta + SCREENS.length) % SCREENS.length);
+
   return (
     <section
       id="prototype"
@@ -61,42 +64,91 @@ export default function Prototype() {
             <span className={styles.label}>Concept · sample data</span>
           </div>
 
-          <Link href="/demo" className={styles.demoLink}>
-            Open live demo
-            <span className={styles.arrow} aria-hidden="true">
-              ↗
-            </span>
-          </Link>
+          <div className={styles.headRight}>
+            <div className={styles.pager}>
+              <span className={styles.counter} aria-live="polite">
+                {SCREENS[active].id} / 0{SCREENS.length}
+              </span>
+              <div className={styles.arrows}>
+                <button
+                  type="button"
+                  className={styles.arrowBtn}
+                  onClick={() => step(-1)}
+                  aria-label="Previous prototype screen"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M10 3.5 5.5 8l4.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={styles.arrowBtn}
+                  onClick={() => step(1)}
+                  aria-label="Next prototype screen"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M6 3.5 10.5 8 6 12.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <span className={styles.divider} aria-hidden="true" />
+
+            <Link href="/demo" className={styles.demoLink}>
+              Open live demo
+              <span className={styles.arrow} aria-hidden="true">
+                ↗
+              </span>
+            </Link>
+          </div>
         </header>
 
         <div className={styles.stage}>
-          {SCREENS.map((screen, i) => {
-            const isActive = i === active;
-            return (
-              <figure
-                key={screen.id}
-                className={`${styles.slide} ${isActive ? styles.activeSlide : ""}`}
-              >
-                <div className={styles.frame}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={screen.src}
-                    alt={screen.alt}
-                    width={1440}
-                    height={900}
-                    loading={i === 0 ? "eager" : "lazy"}
-                    decoding="async"
-                    className={styles.image}
-                  />
-                </div>
-                <figcaption className={styles.mobileCaption}>
-                  <span className={styles.capIndex}>{screen.id}</span>
-                  <strong className={styles.capTitle}>{screen.title}</strong>
-                  <span className={styles.capText}>{screen.caption}</span>
-                </figcaption>
-              </figure>
-            );
-          })}
+          <div
+            className={styles.track}
+            style={{ "--active": active } as CSSProperties}
+          >
+            {SCREENS.map((screen, i) => {
+              const isActive = i === active;
+              return (
+                <figure
+                  key={screen.id}
+                  className={`${styles.slide} ${isActive ? styles.activeSlide : ""}`}
+                >
+                  <div className={styles.frame}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={screen.src}
+                      alt={screen.alt}
+                      width={1440}
+                      height={900}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      decoding="async"
+                      className={styles.image}
+                    />
+                  </div>
+                  <figcaption className={styles.mobileCaption}>
+                    <span className={styles.capIndex}>{screen.id}</span>
+                    <strong className={styles.capTitle}>{screen.title}</strong>
+                    <span className={styles.capText}>{screen.caption}</span>
+                  </figcaption>
+                </figure>
+              );
+            })}
+          </div>
         </div>
 
         <ol className={styles.tabs} role="tablist" aria-label="Prototype screens">
