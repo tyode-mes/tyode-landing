@@ -4,7 +4,7 @@
    language switch) is kept here, so it carries across pages. Kept for this browser tab only. */
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { COOL, RULES, TYRES, type Rule } from "./data";
+import { ALERTS, COOL, RULES, TYRES, type Rule } from "./data";
 
 export type Scan = { serial: string; at: string; stage: string; result: "ok" | "blocked" | "undone" };
 export type DemoState = {
@@ -58,3 +58,7 @@ export function holdOf(serial: string, st: DemoState): string | null {
   return null;
 }
 export const heldList = (st: DemoState) => TYRES.filter((t) => holdOf(t.serial, st));
+
+/* alerts still open: the A-207 report closes once approved or dismissed, A-202 once the unattributed stitch is approved */
+export const openAlerts = (st: DemoState) =>
+  ALERTS.filter((a) => !(a.id === "A-207" && st.report !== "draft") && !(a.id === "A-202" && st.approvedUnattributed));
