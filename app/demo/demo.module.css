@@ -672,3 +672,62 @@ a.srcChip:hover{background:#e6e6e6}
   .stageLine{border:1px solid #ddd}
   .btnGhost,.btn{display:none}
 }
+
+/* ---------- Overview (home screen) ---------- */
+.ovKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.ovKpi{display:grid;gap:6px;padding:18px 20px;border-radius:18px;background:#fff;border:1px solid var(--hair);text-decoration:none;color:inherit;transition:box-shadow .2s}
+.ovKpi:hover{box-shadow:0 0 0 1.5px #0b0b0b}
+.ovKpi span{font-size:13.5px;color:var(--ink-2)}
+.ovKpi b{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.ovKpi em{font-style:normal;font-size:12.5px;color:var(--ink-2)}
+.ovAmber{background:#fff6e6;border-color:#f1cf8f}
+.ovGreen{background:#eef7f1;border-color:#a9d9bc}
+.ovStages{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.ovStages a{display:grid;gap:4px;padding:14px 14px 12px;border-radius:12px;background:#f4f4f5;text-decoration:none;color:inherit;transition:background .2s}
+.ovStages a:hover{background:#ebebed}
+.ovStages span{font-size:12.5px;color:var(--ink-2)}
+.ovStages b{font-size:26px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+.ovStages em{font-style:normal;font-size:11.5px;color:var(--ink-2)}
+.ovGrid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.ovAttn{background:#fffcf5;border-color:#f1cf8f}
+.ovTodo{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ovTodo li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:#fff;border:1px solid #f3e1bd}
+.ovTodo li .pill{justify-self:start}
+.ovTodo b{display:block;font-size:14px;font-weight:600}
+.ovTodo div span{display:block;margin-top:2px;font-size:12.5px;color:var(--ink-2)}
+.ovTodo a{font-size:13.5px;font-weight:600;color:var(--blue);text-decoration:none}
+.ovTodo a:hover{text-decoration:underline}
+.ovActions{display:grid;gap:10px}
+.ovActions a{display:block;padding:11px 16px;border-radius:999px;border:1px solid rgb(12 12 13 / .18);background:#fff;text-align:center;font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;transition:box-shadow .2s}
+.ovActions a:hover{box-shadow:0 0 0 1.5px #0b0b0b}
+.ovActions .ovAsk{text-align:left;font-weight:400;color:var(--ink-2);background:#f4f4f5;border-color:transparent}
+@media (max-width:1100px){
+  .ovKpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ovStages{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ovGrid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .ovKpis{grid-template-columns:1fr}
+  .ovStages{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ovTodo li{grid-template-columns:1fr auto}
+  .ovTodo li .pill{grid-column:1 / -1}
+}
+
+/* Sidebar fits the window: slimmer rows, and on shorter screens tighter still. If it ever has to
+   scroll, the scrollbar stays thin and dark, so it never squeezes the nav or hides the badges. */
+.side{scrollbar-width:thin;scrollbar-color:rgb(255 255 255 / .18) transparent;scrollbar-gutter:auto}
+.side::-webkit-scrollbar{width:6px}
+.side::-webkit-scrollbar-thumb{background:rgb(255 255 255 / .18);border-radius:3px}
+.navGroup a{padding:8px 14px}
+.nav{gap:14px}
+@media (min-width:901px) and (max-height:1000px){
+  .side{padding:20px 14px 14px}
+  .product{margin:6px 10px 16px}
+  .plant{margin:0 0 14px}
+  .nav{gap:10px}
+  .navGroup a{padding:6px 14px;font-size:14px}
+  .navGroup > span{padding:0 14px 4px}
+  .sideNote{margin-top:12px;padding-top:10px;padding-bottom:10px}
+  .user{padding-top:10px}
+}
+@media (min-width:901px) and (max-height:800px){ .sideNote{display:none} }

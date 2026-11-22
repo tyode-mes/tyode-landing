@@ -209,15 +209,15 @@ export const ALERTS: Alert[] = [
   { id: "A-207", at: 9 * 60 + 52, severity: "high", rule: "Cure too cool", title: "P-03 ran below cure temperature", where: "P-03 · mould M-07",
     text: "148 °C against a spec of 155 °C, for more than 10 minutes, across four cure cycles from 09:05.", report: true },
   { id: "A-206", at: flag("BM-04").at, severity: "medium", rule: "Min stitch interval", title: "Stitch too soon on BM-04", where: "BM-04 · A. Bandara",
-    text: flag("BM-04").reason!, href: "/demo#flags" },
+    text: flag("BM-04").reason!, href: "/demo/count#flags" },
   { id: "A-205", at: heavyTyre.inspectedAt!, severity: "medium", rule: "Weight out of spec", title: `${heavyTyre.serial} failed on weight`, where: `Inspection · ${heavyTyre.serial}`,
     text: heavyTyre.note!, href: `/demo/tyres?serial=${heavyTyre.serial}` },
   { id: "A-204", at: flag("BM-02").at, severity: "low", rule: "Min stitch interval", title: "Stitch too soon on BM-02", where: "BM-02 · S. Fernando",
-    text: flag("BM-02").reason!, href: "/demo#flags" },
+    text: flag("BM-02").reason!, href: "/demo/count#flags" },
   { id: "A-203", at: 7 * 60 + 23, severity: "low", rule: "Counter heartbeat", title: "BM-05 counter went quiet", where: "BM-05 edge device",
     text: "No heartbeat for 2 min 40 s. It came back at 07:26 and sent the stitches it had stored. No count was lost." },
   { id: "A-202", at: unatt.at, severity: "medium", rule: "No badge at stitch", title: "Unattributed stitch on BM-06", where: "BM-06",
-    text: unatt.reason! + " Needs supervisor approval before it is credited.", href: "/demo#flags" },
+    text: unatt.reason! + " Needs supervisor approval before it is credited.", href: "/demo/count#flags" },
 ];
 
 /* the investigation report the AI Root-Cause Detective drafted for A-207 */

@@ -1,140 +1,138 @@
 "use client";
 
-/* Screen 07: green tyre count. The count comes only from each building machine's auto-stitch signal. */
+/* Overview: the demo's home screen, from the Figma prototype. One look at the line: counts, alerts,
+   holds and devices, the tyres at each pilot stage, what needs attention and the latest activity.
+   Every number comes from the same sample data and demo state as the other screens, so approving a
+   report or a stitch elsewhere changes it here too. */
 
 import Link from "next/link";
-import { BUILDERS, DATE, HEARTBEAT_LIMIT, MACHINES, MIN_GAP, NOW, STITCHES, builderFor, byHour, counts, events, hhmm } from "./data";
-import { useDemo } from "./store";
-import { Card, Kpi, PageHead, Pill } from "./ui";
+import { COOL, DEVICES, LINE, NOW, PEOPLE, TYRES, counts, events, hhmm } from "./data";
+import { heldList, openAlerts, useDemo } from "./store";
+import { PageHead, Pill } from "./ui";
 import s from "./demo.module.css";
 
-export default function GreenTyreCount() {
-  const { st, set } = useDemo();
+const greeting = (m: number) => (m < 12 * 60 ? "Good morning" : m < 17 * 60 ? "Good afternoon" : "Good evening");
+
+export default function Overview() {
+  const { st } = useDemo();
   const c = counts();
-  const approved = st.approvedUnattributed;
-  const counted = c.counted + (approved ? 1 : 0), unatt = approved ? 0 : c.unattributed;
-  const hours = byHour();
-  const max = Math.max(...hours.map((h) => h.counted + h.flagged));
-  const flags = STITCHES.filter((x) => x.kind !== "counted").sort((a, b) => b.at - a.at);
-  const ev = events().slice(0, 6);
+  const counted = c.counted + (st.approvedUnattributed ? 1 : 0);
+  const unatt = st.approvedUnattributed ? 0 : c.unattributed;
+  const uncounted = c.flagged + unatt;
+  const open = openAlerts(st);
+  const high = open.filter((a) => a.severity === "high");
+  const held = heldList(st);
+  const online = DEVICES.filter((d) => d.status === "Online").length;
+
+  /* tyres at each pilot stage; a held tyre is counted under Holds, not in the flow */
+  const isHeld = new Set(held.map((t) => t.serial));
+  const at = (stage: string) => TYRES.filter((t) => t.stage === stage && !isHeld.has(t.serial)).length;
+  const stages = [
+    { label: "Building", n: counted, sub: "counted this shift", href: "/demo/count" },
+    { label: "Waiting to cure", n: at("built"), sub: "tyres", href: "/demo/holds" },
+    { label: "Curing", n: at("curing"), sub: "in presses", href: "/demo/holds" },
+    { label: "Waiting for inspection", n: at("inspection"), sub: "tyres", href: "/demo/station/inspect" },
+    { label: "Released to storage", n: at("released"), sub: "passed inspection", href: "/demo/report" },
+  ];
+
+  /* what a person has to act on, most urgent first */
+  const todo: { tone: "red" | "amber" | "grey"; tag: string; title: string; sub: string; href: string }[] = [];
+  if (st.report === "draft")
+    todo.push({ tone: "red", tag: "High", title: "P-03 ran below cure temperature", sub: `Investigation report ready to review · ${COOL.length} tyres affected`, href: "/demo/alerts" });
+  if (c.flagged)
+    todo.push({ tone: "amber", tag: "Review", title: `${c.flagged} build cycle${c.flagged > 1 ? "s" : ""} not counted`, sub: "Shorter than the minimum build time · supervisor to approve or reject", href: "/demo/count#flags" });
+  if (unatt)
+    todo.push({ tone: "amber", tag: "Review", title: `${unatt} build with no builder signed in`, sub: "Not credited yet · needs supervisor approval", href: "/demo/count#flags" });
+  /* holds: one row per tyre held at inspection, one row per hold placed on a group of tyres */
+  held.filter((t) => t.stage === "held").forEach((t) =>
+    todo.push({ tone: "grey", tag: "Hold", title: `${t.serial} on hold`, sub: "Weight above spec · waiting for an engineer", href: `/demo/tyres?serial=${t.serial}` }));
+  const coolHeld = held.filter((t) => t.stage !== "held" && st.report === "approved" && COOL.includes(t)).length;
+  if (coolHeld)
+    todo.push({ tone: "grey", tag: "Hold", title: `${coolHeld} tyres on hold from investigation A-207`, sub: "Cured below 155 °C in P-03 · waiting for an engineer to release or scrap", href: "/demo/holds" });
+  const batchHeld = held.filter((t) => t.stage !== "held" && !(st.report === "approved" && COOL.includes(t))).length;
+  if (batchHeld)
+    todo.push({ tone: "grey", tag: "Hold", title: `${batchHeld} tyres on hold from batch C-1042`, sub: "Held from the batch search · waiting for an engineer", href: "/demo/holds" });
+
+  const feed = events().slice(0, 5);
 
   return (
     <>
-      <PageHead title="Green tyre count"
-        sub={`Shift A so far, 06:00 to ${hhmm(NOW)}. Each count comes from a building machine's auto-stitch signal and is linked to the operator's badge. Operators cannot type or change it.`}>
-        <span className={s.chip}>Line PL-1 · {DATE.slice(4)}</span>
+      <PageHead title={`${greeting(NOW)}, ${PEOPLE.engineer.name}`}
+        sub={`Line ${LINE.id}, Shift A so far (06:00 to ${hhmm(NOW)}). What is happening on the line and what needs your attention.`}>
+        <span className={s.chip}>{LINE.label}</span>
       </PageHead>
 
-      <div className={`${s.kpis} ${s.kpis4}`}>
-        <Kpi label="Counted (verified)" value={counted} sub="Valid stitch, badge logged in" />
-        <Kpi label="Flagged attempts" value={c.flagged} tone="amber" sub={`Under the ${MIN_GAP} min gap, not counted`} href="#flags" />
-        <Kpi label="Unattributed" value={unatt} tone={unatt ? "amber" : undefined} sub={unatt ? "No badge, needs approval" : "None waiting"} href="#flags" />
-        <Kpi label="Counters online" value={`${MACHINES.length}/${MACHINES.length}`} tone="green" sub={`Heartbeat every minute, alert after ${HEARTBEAT_LIMIT} min`} href="/demo/devices" />
+      <div className={s.ovKpis}>
+        <Link href="/demo/count" className={s.ovKpi}>
+          <span>Tyres counted</span><b>{counted}</b>
+          <em>{uncounted ? `${uncounted} cycle${uncounted > 1 ? "s" : ""} not counted, waiting for review` : "Every cycle accounted for"}</em>
+        </Link>
+        <Link href="/demo/alerts" className={`${s.ovKpi} ${open.length ? s.ovAmber : ""}`}>
+          <span>Open alerts</span><b>{open.length}</b>
+          <em>{high.length ? `${high.length} high: investigation report ready` : open.length ? "None high" : "Nothing open"}</em>
+        </Link>
+        <Link href="/demo/holds" className={s.ovKpi}>
+          <span>Tyres on hold</span><b>{held.length}</b>
+          <em>{held.length ? "Waiting for an engineer" : "None held"}</em>
+        </Link>
+        <Link href="/demo/devices" className={`${s.ovKpi} ${online === DEVICES.length ? s.ovGreen : ""}`}>
+          <span>Devices online</span><b>{online}/{DEVICES.length}</b>
+          <em>All counters sending a heartbeat</em>
+        </Link>
       </div>
 
-      <p className={s.balance}>
-        {c.signals} stitch signals = {counted} counted + {c.flagged} flagged{unatt ? ` + ${unatt} unattributed` : ""}. Scrap is recorded separately and is not part of this count.
-      </p>
+      <section className={s.card}>
+        <div className={s.cardHead}>
+          <h2>Line by stage</h2>
+          <span className={s.muted}>Pilot stages: green tyre to inspection</span>
+        </div>
+        <ol className={s.ovStages}>
+          {stages.map((x) => (
+            <li key={x.label}>
+              <Link href={x.href}><span>{x.label}</span><b>{x.n}</b><em>{x.sub}</em></Link>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-      <div className={s.gridMain}>
-        <Card className={s.flush}>
-          <div className={s.flushHead}>
-            <h2 className={s.chartTitle}>By builder</h2>
-            <Link className={s.cardLink} href="/demo/walkthrough">How the count works</Link>
-          </div>
-          <table className={`${s.table} ${s.tableBig}`}>
-            <thead><tr><th>Builder</th><th>Machine</th><th>Counted</th><th>Flagged</th><th>Status</th></tr></thead>
-            <tbody>
-              {BUILDERS.map((b) => {
-                const k = counts(b.machine);
-                const mine = k.counted + (b.machine === "BM-06" && approved ? 1 : 0);
-                return (
-                  <tr key={b.badge}>
-                    <td><b>{b.name}</b><small>Badge {b.badge}</small></td>
-                    <td>{b.machine}</td>
-                    <td>{mine}</td>
-                    <td>{k.flagged ? <span className={s.gapAmber}>{k.flagged}</span> : <span className={s.zero}>0</span>}</td>
-                    <td>
-                      {k.unattributed && !approved ? <Pill tone="amber">1 unattributed</Pill>
-                        : k.flagged ? <Pill tone="amber">Flag to review</Pill> : <Pill tone="green">Counting</Pill>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <div className={s.chartBox}>
-            <h2 className={s.chartTitle}>Counts per hour</h2>
-            <div className={s.bars} role="img" aria-label="Counted and flagged stitches per hour">
-              {hours.map((h) => (
-                <div key={h.hour} className={s.barCol}>
-                  <div className={s.barStack}>
-                    {h.flagged > 0 && <i style={{ height: `${(h.flagged / max) * 100}%` }} className={s.bFlag} title={`${h.flagged} flagged`} />}
-                    <i style={{ height: `${(h.counted / max) * 100}%` }} className={s.bBuilt} title={`${h.counted} counted`} />
-                  </div>
-                  <span>{h.hour}</span>
-                  <em>{h.counted}{h.flagged ? ` + ${h.flagged}` : ""}</em>
-                </div>
+      <div className={s.ovGrid}>
+        <section className={`${s.card} ${todo.length ? s.ovAttn : ""}`}>
+          <div className={s.cardHead}><h2>Needs attention</h2></div>
+          {todo.length ? (
+            <ul className={s.ovTodo}>
+              {todo.map((x) => (
+                <li key={x.title}>
+                  <Pill tone={x.tone}>{x.tag}</Pill>
+                  <div><b>{x.title}</b><span>{x.sub}</span></div>
+                  <Link href={x.href} aria-label={`Open: ${x.title}`}>Open</Link>
+                </li>
               ))}
-            </div>
-            <div className={s.legend}>
-              <span><i className={s.bBuilt} />Counted</span>
-              <span><i className={s.bFlag} />Flagged</span>
-              <span>The 10:00 hour is still running.</span>
-            </div>
-          </div>
-        </Card>
+            </ul>
+          ) : <p className={s.muted}>Nothing needs you right now.</p>}
+        </section>
 
-        <section className={s.flagPanel} id="flags" aria-labelledby="flags-h">
-          <h2 id="flags-h">Flags and approvals ({flags.length})</h2>
-          <div className={s.missList}>
-            {flags.map((f) => {
-              const b = builderFor(f.machine);
-              const isU = f.kind === "unattributed";
-              return (
-                <div key={f.id} className={`${s.flagItem} ${isU && approved ? s.flagDone : ""}`}>
-                  <div className={s.flagTop}>
-                    <Pill tone={isU ? (approved ? "green" : "amber") : "amber"}>{isU ? (approved ? "Approved" : "No badge") : "Too soon"}</Pill>
-                    <time>{hhmm(f.at)} · {f.machine}</time>
-                  </div>
-                  <span>{f.reason}</span>
-                  {isU && !approved && (
-                    <button type="button" className={s.btnSmall} onClick={() => set((x) => ({ ...x, approvedUnattributed: true }))}>
-                      Approve for {b.name}
-                    </button>
-                  )}
-                  {isU && approved && <em>Approved by the shift supervisor and credited to {b.name}. Logged.</em>}
-                  {!isU && <em>Not counted. Logged against badge {f.badge}.</em>}
-                </div>
-              );
-            })}
+        <section className={s.card}>
+          <div className={s.cardHead}><h2>Quick actions</h2></div>
+          <div className={s.ovActions}>
+            <Link href="/demo/ask" className={s.ovAsk}>Ask Tyode about a tyre, batch or press…</Link>
+            <Link href="/demo/tyres">Look up a tyre</Link>
+            <Link href="/demo/holds">Search a batch and hold</Link>
+            <Link href="/demo/report">Open shift report</Link>
           </div>
-          <Link href="/demo/report" className={s.blackBtn}>Open shift report</Link>
         </section>
       </div>
 
-      <div className={s.gridMain}>
-        <Card title="How a stitch becomes a count">
-          <ol className={s.howSteps}>
-            <li><b>Badge log-in</b><span>The operator taps their badge at the building machine. Every count is linked to it.</span></li>
-            <li><b>Auto-stitch signal</b><span>Tyode reads the machine&apos;s PLC signal, or the stitch signal or button if there is no PLC. Read only.</span></li>
-            <li><b>Checks</b><span>At least {MIN_GAP} minutes since the last stitch on that machine, and a badge logged in.</span></li>
-            <li><b>Counted and labelled</b><span>A valid stitch is counted and a GT- label prints for the green tyre. Anything else is flagged or held for approval.</span></li>
-          </ol>
-          <p className={s.muted}>Each counter sends a heartbeat every minute. If none arrives for {HEARTBEAT_LIMIT} minutes an alert is raised, so a counter can&apos;t be quietly unplugged. Together these make the count difficult to cheat.</p>
-        </Card>
-
-        <Card title="Latest activity">
-          <ol className={s.feed}>
-            {ev.map((e, i) => (
-              <li key={i} className={s["f_" + e.kind]}>
-                <time>{hhmm(e.at)}</time>
-                {e.href ? <Link href={e.href}>{e.text}</Link> : <span>{e.text}</span>}
-              </li>
-            ))}
-          </ol>
-        </Card>
-      </div>
+      <section className={s.card}>
+        <div className={s.cardHead}><h2>Latest activity</h2></div>
+        <ul className={s.feed}>
+          {feed.map((e, i) => (
+            <li key={i}>
+              <time>{hhmm(e.at)}</time>
+              {e.href ? <Link href={e.href}>{e.text}</Link> : <span>{e.text}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
     </>
   );
 }

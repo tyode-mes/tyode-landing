@@ -39,7 +39,7 @@ function answer(q: string, st: DemoState): Answer {
     if (!b) return { unknown: true, sources: [], text: `There is no machine ${id} on line PL-1.` };
     return {
       text: `${id} counted ${c.counted} tyres this shift, all by ${b.name} (badge ${b.badge}).${c.flagged ? ` ${c.flagged} more stitch${c.flagged > 1 ? "es were" : " was"} flagged for coming under 15 minutes after the last one, and not counted.` : ""}${c.unattributed ? ` ${c.unattributed} stitch had no badge logged in and is waiting for supervisor approval.` : ""}`,
-      sources: [{ label: `${id} stitch log, Shift A` }, { label: `Badge log ${id}` }, { label: "Green tyre count", href: "/demo" }],
+      sources: [{ label: `${id} stitch log, Shift A` }, { label: `Badge log ${id}` }, { label: "Green tyre count", href: "/demo/count" }],
     };
   }
   if (serial) {

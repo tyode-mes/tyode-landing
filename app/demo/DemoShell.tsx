@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import TyodeLogo from "@/components/brand/TyodeLogo";
-import { ALERTS, LINE, hhmm } from "./data";
-import { DemoProvider, heldList, useDemo } from "./store";
+import { LINE, hhmm } from "./data";
+import { DemoProvider, heldList, openAlerts, useDemo } from "./store";
 import { Icon } from "./ui";
 import s from "./demo.module.css";
 
@@ -16,7 +16,8 @@ const NAV: { group: string; items: Item[] }[] = [
   {
     group: "The floor",
     items: [
-      { href: "/demo", label: "Green tyre count", icon: "overview" },
+      { href: "/demo", label: "Overview", icon: "overview" },
+      { href: "/demo/count", label: "Green tyre count", icon: "tyre" },
       { href: "/demo/alerts", label: "Alerts", icon: "alert", badge: (n) => n.alerts },
       { href: "/demo/holds", label: "Holds", icon: "lock", badge: (n) => n.held },
     ],
@@ -52,7 +53,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [q, setQ] = useState("");
   const [bell, setBell] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const open = ALERTS.filter((a) => !(a.id === "A-207" && st.report !== "draft") && !(a.id === "A-202" && st.approvedUnattributed));
+  const open = openAlerts(st);
   const counts = { alerts: open.length, held: heldList(st).length };
 
   useEffect(() => {
