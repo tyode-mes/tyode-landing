@@ -14,8 +14,8 @@ export const SITE_URL = (fromEnv ?? "http://localhost:3000").replace(/\/+$/, "")
 
 export const SITE_NAME = "Tyode";
 
-export const SITE_TITLE = "Tyode - Process Intelligence for Solid Tyres";
+export const SITE_TITLE = "Tyode - Traceability for Solid and Pneumatic Tyres";
 
 /** ~155 characters: roughly what Google shows under the title in results */
 export const SITE_DESCRIPTION =
-  "Tyode is a digital passport for solid tyres. It traces every tyre from compound batch to export container, records quality checks and helps explain failures.";
+  "Tyode counts every green tyre at the machine, gives each solid and pneumatic tyre a digital passport, and uses AI to explain defects with every source cited.";

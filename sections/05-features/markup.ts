@@ -4,8 +4,35 @@ export const FEATURES_MARKUP = String.raw`
 
   <!-- scene templates (one SVG per feature), cloned into the desktop screen and the mobile cards -->
   <template id="ft-scenes">
-    <!-- 01 PASSPORT -->
+    <!-- 01 GREEN TYRE COUNT (pilot) -->
     <div class="sc" data-s="0"><svg viewBox="0 0 800 460" aria-hidden="true">
+      <g class="pop" style="--d:.1s"><text x="60" y="40">Building machine BM-04 · no PLC</text>
+      <text x="60" y="66" class="tx-ink" style="font-size:16px;letter-spacing:0;text-transform:none">Counted from its auto-stitch signal</text></g>
+      <g class="pop" style="--d:.25s"><rect class="tile" x="500" y="22" width="240" height="52" rx="26"/><circle cx="530" cy="48" r="6" fill="#f2f2f3"/>
+      <text x="548" y="52" class="tx-ink">Staff card · S-0427</text></g>
+      <g class="pop" style="--d:.5s"><line class="lim" x1="90" y1="128" x2="160" y2="128"/><text x="90" y="118">Min. build time</text></g>
+      <line class="hl" x1="60" y1="200" x2="740" y2="200"/>
+      <path class="ln draw" style="--len:1300;--d:.3s" d="M60 200 H90 V150 H180 V200 H220 V150 H310 V200 H350 V150 H372 V200 H420 V150 H510 V200 H550 V150 H640 V200 H740"/>
+      <g class="pop" style="--d:1.3s"><rect x="344" y="144" width="34" height="62" rx="6" fill="none" class="s-sig" stroke-width="1.4"/><text x="361" y="132" text-anchor="middle" class="tx-sig">Too short</text></g>
+      <g class="pop" style="--d:.8s"><text x="135" y="228" text-anchor="middle">Build 101</text></g>
+      <g class="pop" style="--d:.95s"><text x="265" y="228" text-anchor="middle">102</text></g>
+      <g class="pop" style="--d:1.3s"><text x="361" y="228" text-anchor="middle" class="tx-sig">Review</text></g>
+      <g class="pop" style="--d:1.1s"><text x="465" y="228" text-anchor="middle">103</text></g>
+      <g class="pop" style="--d:1.25s"><text x="595" y="228" text-anchor="middle" class="tx-ink">104</text></g>
+      <g class="pop" style="--d:.6s"><rect class="hl" x="60" y="262" width="200" height="108" rx="16"/><text x="82" y="290">Machine count</text>
+        <text x="82" y="344" class="tx-ink" style="font-size:40px;letter-spacing:0;font-weight:500">104</text></g>
+      <g class="pop" style="--d:.75s"><rect class="hl" x="290" y="262" width="200" height="108" rx="16"/><text x="312" y="290">Shift log said</text>
+        <text x="312" y="344" style="font-size:40px;letter-spacing:0;font-weight:500">120</text></g>
+      <g class="pop" style="--d:.9s"><rect class="hl" x="520" y="262" width="220" height="108" rx="16"/><text x="542" y="290" class="tx-sig">Gap · 16 tyres</text>
+        <text x="542" y="322" class="tx-ink" style="font-size:15px;letter-spacing:0;text-transform:none">Flagged during the shift,</text>
+        <text x="542" y="344" class="tx-ink" style="font-size:15px;letter-spacing:0;text-transform:none">14:00 to 16:00</text></g>
+      <g class="pop" style="--d:1.6s"><rect x="60" y="394" width="680" height="46" rx="23" fill="#18181a" class="s-sig" stroke-opacity=".6"/>
+        <circle cx="88" cy="417" r="6" class="f-sig"/><text x="106" y="421" class="tx-sig">Heartbeat alert · BM-07 quiet for 12 min</text>
+        <text x="716" y="421" text-anchor="end">Supervisor notified</text></g>
+    </svg></div>
+
+    <!-- 02 PASSPORT -->
+    <div class="sc" data-s="1"><svg viewBox="0 0 800 460" aria-hidden="true">
       <g class="dm" id="ft-dm"></g>
       <g class="pop" style="--d:.15s"><text x="226" y="62">Tyre ID · on the steel band</text>
       <text x="226" y="114" class="tx-ink" style="font-size:44px;letter-spacing:.04em;font-weight:500">P1-2611-00427</text></g>
@@ -29,7 +56,7 @@ export const FEATURES_MARKUP = String.raw`
     </svg></div>
 
     <!-- 02 CONTAINMENT -->
-    <div class="sc" data-s="1"><svg viewBox="0 0 800 460" aria-hidden="true">
+    <div class="sc" data-s="2"><svg viewBox="0 0 800 460" aria-hidden="true">
       <g class="pop" style="--d:.1s"><rect x="40" y="190" width="190" height="80" rx="16" fill="none" class="s-sig" stroke-width="1.6"/>
       <text x="60" y="222" class="tx-sig">Batch flagged</text><text x="60" y="250" class="tx-ink" style="font-size:16px;letter-spacing:.02em">Cushion C-1030-11</text></g>
       <path class="ln draw" style="--len:560;--d:.4s" d="M230 230 H290 M290 230 V110 H312 M290 230 V350 H312 M290 230 H312"/>
@@ -42,8 +69,8 @@ export const FEATURES_MARKUP = String.raw`
     </svg></div>
 
     <!-- 03 QUALITY CHECK -->
-    <div class="sc" data-s="2"><svg viewBox="0 0 800 460" aria-hidden="true">
-      <g class="pop" style="--d:.1s"><rect class="hl" x="60" y="24" width="330" height="176" rx="16"/><text x="82" y="52">Ultrasound A-scan</text>
+    <div class="sc" data-s="3"><svg viewBox="0 0 800 460" aria-hidden="true">
+      <g class="pop" style="--d:.1s"><rect class="hl" x="60" y="24" width="330" height="176" rx="16"/><text x="82" y="52">Ultrasound A-scan · solid</text>
         <path class="ln draw" style="--len:560;--d:.4s" d="M82 176 H140 L146 96 L152 176 H230 L236 140 L242 176 H300 L306 150 L312 176 H368"/></g>
       <g class="pop" style="--d:1.3s"><circle cx="236" cy="140" r="11" fill="none" class="s-sig" stroke-width="1.4"/><text x="254" y="126" class="tx-sig">Void</text></g>
       <g class="pop" style="--d:.25s"><rect class="hl" x="410" y="24" width="330" height="176" rx="16"/><text x="432" y="52">Weight vs target</text>
@@ -52,7 +79,7 @@ export const FEATURES_MARKUP = String.raw`
         <line x1="560" y1="134" x2="560" y2="162" stroke="#f2f2f3" stroke-width="1.4"/>
         <text x="560" y="182" text-anchor="middle">Target for this size</text></g>
       <g class="pop" style="--d:1.1s"><circle cx="594" cy="148" r="7" class="f-sig"/><text x="718" y="108" text-anchor="end" class="tx-sig">Rubber giveaway</text></g>
-      <g class="pop" style="--d:.4s"><rect class="hl" x="60" y="220" width="330" height="124" rx="16"/><text x="82" y="248">Hardness · Shore A</text>
+      <g class="pop" style="--d:.4s"><rect class="hl" x="60" y="220" width="330" height="124" rx="16"/><text x="82" y="248">Shore A per layer · solid</text>
         <text x="82" y="280">Tread</text><rect x="180" y="271" width="144" height="10" rx="5" fill="#3a3a3e"/><text x="370" y="280" text-anchor="end" class="tx-ink">72</text>
         <text x="82" y="304">Cushion</text><rect x="180" y="295" width="126" height="10" rx="5" fill="#3a3a3e"/><text x="370" y="304" text-anchor="end" class="tx-ink">63</text>
         <text x="82" y="328">Base</text><rect x="180" y="319" width="172" height="10" rx="5" fill="#3a3a3e"/><text x="370" y="328" text-anchor="end" class="tx-ink" dx="0">86</text></g>
@@ -66,7 +93,7 @@ export const FEATURES_MARKUP = String.raw`
     </svg></div>
 
     <!-- 04 DRIFT -->
-    <div class="sc" data-s="3"><svg viewBox="0 0 800 460" aria-hidden="true">
+    <div class="sc" data-s="4"><svg viewBox="0 0 800 460" aria-hidden="true">
       <g class="pop" style="--d:1.6s">
         <rect x="150" y="16" width="500" height="80" rx="20" fill="#18181a" class="s-sig" stroke-opacity=".6"/>
         <circle cx="184" cy="56" r="7" class="f-sig"/>
@@ -82,7 +109,7 @@ export const FEATURES_MARKUP = String.raw`
     </svg></div>
 
     <!-- 05 CORE CURE -->
-    <div class="sc" data-s="4"><svg viewBox="0 0 800 460" aria-hidden="true">
+    <div class="sc" data-s="5"><svg viewBox="0 0 800 460" aria-hidden="true">
       <text x="80" y="48">Temperature</text>
       <line class="hl" x1="80" y1="60" x2="80" y2="360"/><line class="hl" x1="80" y1="360" x2="560" y2="360"/>
       <text x="560" y="388" text-anchor="end">Cure time</text>
@@ -100,7 +127,7 @@ export const FEATURES_MARKUP = String.raw`
     </svg></div>
 
     <!-- 06 PROCESS CLUES + COST -->
-    <div class="sc" data-s="5"><svg viewBox="0 0 800 460" aria-hidden="true">
+    <div class="sc" data-s="6"><svg viewBox="0 0 800 460" aria-hidden="true">
       <g class="pop" style="--d:.2s">
         <rect x="150" y="16" width="500" height="92" rx="20" fill="#18181a" stroke="#f2f2f3" stroke-opacity=".14"/>
         <text x="178" y="50">Scrap and rework cost · this week</text>
@@ -118,13 +145,39 @@ export const FEATURES_MARKUP = String.raw`
       <text x="390" y="426" text-anchor="middle" class="tx-sig">P-03</text><text x="486" y="426" text-anchor="middle">P-04</text><text x="582" y="426" text-anchor="middle">P-05</text>
       <g class="pop" style="--d:1.5s"><text x="432" y="240" class="tx-ink">Worth checking: cure dips</text><text x="432" y="260" class="tx-ink">at minute 14 on P-03</text></g>
     </svg></div>
+
+    <!-- 08 AI ROOT-CAUSE DETECTIVE + ASK TYODE -->
+    <div class="sc" data-s="7"><svg viewBox="0 0 800 460" aria-hidden="true">
+      <g class="pop" style="--d:.1s">
+        <rect x="40" y="10" width="720" height="100" rx="20" fill="#18181a" stroke="#f2f2f3" stroke-opacity=".14"/>
+        <text x="68" y="42" class="tx-sig">Root-cause draft · 5 bead faults in 2 days</text>
+        <text x="68" y="70" class="tx-ink" style="font-size:16px;letter-spacing:0;text-transform:none">Bead faults on size 6.50-10 link to compound batch C-1182,</text>
+        <text x="68" y="93" class="tx-ink" style="font-size:16px;letter-spacing:0;text-transform:none">used only on Press 7. A past report found a similar case.</text>
+      </g>
+      <text x="40" y="150">Likely causes · ranked</text>
+      <text x="40" y="182" class="tx-ink">Batch C-1182</text><rect class="hl" x="170" y="172" width="220" height="12" rx="6"/><rect class="barx f-sig" style="--d:.5s" x="170" y="172" width="196" height="12" rx="6"/>
+      <text x="40" y="218">Press 7</text><rect class="hl" x="170" y="208" width="220" height="12" rx="6"/><rect class="barx" style="--d:.65s" x="170" y="208" width="104" height="12" rx="6" fill="#3a3a3e"/>
+      <text x="40" y="254">Night shift</text><rect class="hl" x="170" y="244" width="220" height="12" rx="6"/><rect class="barx" style="--d:.8s" x="170" y="244" width="36" height="12" rx="6" fill="#3a3a3e"/>
+      <g class="pop" style="--d:1.1s"><text x="40" y="294" class="tx-ink">Draft hold list · 46 tyres</text></g>
+      <text x="430" y="150">Sources cited · each one checked</text>
+      <g class="pop" style="--d:.6s"><rect class="hl" x="430" y="164" width="330" height="30" rx="15"/><text x="450" y="184" class="tx-ink">Tyre GT-2611-0427</text><text x="742" y="184" text-anchor="end">Opens</text></g>
+      <g class="pop" style="--d:.75s"><rect class="hl" x="430" y="200" width="330" height="30" rx="15"/><text x="450" y="220" class="tx-ink">Batch record C-1182</text><text x="742" y="220" text-anchor="end">Opens</text></g>
+      <g class="pop" style="--d:.9s"><rect class="hl" x="430" y="236" width="330" height="30" rx="15"/><text x="450" y="256" class="tx-ink">Cure log · Press 7</text><text x="742" y="256" text-anchor="end">Opens</text></g>
+      <g class="pop" style="--d:1.05s"><rect class="hl" x="430" y="272" width="330" height="30" rx="15"/><text x="450" y="292" class="tx-ink">Past report IR-0312</text><text x="742" y="292" text-anchor="end">Opens</text></g>
+      <g class="pop" style="--d:1.4s"><rect class="hl" x="40" y="326" width="720" height="46" rx="23"/>
+        <text x="66" y="353" class="tx-sig">Ask Tyode</text>
+        <text x="170" y="354" class="tx-ink" style="font-size:15px;letter-spacing:0;text-transform:none">“What happened to tyre GT-2611-0427?”</text></g>
+      <g class="pop" style="--d:1.6s"><rect class="tile" x="40" y="394" width="220" height="48" rx="24"/><text x="150" y="422" text-anchor="middle" class="tx-ink">Local model</text></g>
+      <g class="pop" style="--d:1.7s"><rect class="tile" x="290" y="394" width="220" height="48" rx="24"/><text x="400" y="422" text-anchor="middle" class="tx-ink">Places no holds</text></g>
+      <g class="pop" style="--d:1.8s"><rect class="tile pick" x="540" y="394" width="220" height="48" rx="24"/><text x="650" y="422" text-anchor="middle" class="tx-ink">Engineer approves</text></g>
+    </svg></div>
   </template>
 
   <!-- intro -->
   <header class="ft-intro">
     <div class="ft-kicker"><span>Features</span><span>Trace · Check · Explain</span></div>
     <h2 class="ft-h" id="ft-title"><span class="ln"><span>One passport.</span></span><span class="ln"><span>Every tyre explained.</span></span></h2>
-    <p class="ft-lede">Tyode records where every solid tyre came from, what its checks found, and why the bad ones failed. It runs on the presses and instruments the plant already has, without slowing the line.</p>
+    <p class="ft-lede">Tyode counts every green tyre from the machine, records where each solid and pneumatic tyre came from and what its checks found, and helps engineers find why the bad ones failed. It reads the machines and instruments the plant already has, read-only, without slowing the line.</p>
   </header>
 
   <!-- pinned scroll stage -->
@@ -137,56 +190,69 @@ export const FEATURES_MARKUP = String.raw`
           <span class="ft-index" id="ft-index" aria-hidden="true">01</span>
 
           <article class="ft-item" data-i="0">
-            <h3><span class="ln"><span>One tyre.</span></span><span class="ln"><span>One passport.</span></span></h3>
-            <p>A cure-proof ID on the steel band. Every stage adds itself with one scan, from each layer's compound batch to the export container.</p>
-            <ul><li>Per-layer batches</li><li>One scan per stage</li><li>Works offline</li></ul>
+            <h3><span class="ln"><span>Counted by machine,</span></span><span class="ln"><span>not by hand.</span></span></h3>
+            <p>Each build is read from the building machine's PLC, or from its auto-stitch signal where there is no PLC. It counts only if it meets the minimum build time for the size, and is credited to the builder signed in with a staff card. Short cycles go for review.</p>
+            <ul><li>PLC or auto-stitch</li><li>Minimum build time</li><li>Staff-card sign-in</li><li>Heartbeat alert</li></ul>
           </article>
           <article class="ft-item" data-i="1">
+            <h3><span class="ln"><span>One tyre.</span></span><span class="ln"><span>One passport.</span></span></h3>
+            <p>A heat-resistant label on each pneumatic green tyre, or a Data Matrix code on a solid tyre's steel band. Every stage adds itself with one scan, from compound batch and press to inspection.</p>
+            <ul><li>Solid and pneumatic</li><li>One scan per stage</li><li>Works offline</li></ul>
+          </article>
+          <article class="ft-item" data-i="2">
             <h3><span class="ln"><span>Contain a bad batch</span></span><span class="ln"><span>in one click.</span></span></h3>
             <p>Flag a batch, band or press and see every tyre it touched: in work in progress, in the warehouse, or already in a container. Hold them all at once.</p>
             <ul><li>Trace back and forward</li><li>Container level</li><li>Claim lookup in seconds</li></ul>
           </article>
-          <article class="ft-item" data-i="2">
-            <h3><span class="ln"><span>Every check,</span></span><span class="ln"><span>on the record.</span></span></h3>
-            <p>Ultrasound verdict, weight, hardness per layer and dimensions are saved against the tyre. The plant's own instruments measure; the inspector decides.</p>
-            <ul><li>Ultrasound</li><li>Weight vs target</li><li>Shore A per layer</li></ul>
-          </article>
           <article class="ft-item" data-i="3">
+            <h3><span class="ln"><span>Every check,</span></span><span class="ln"><span>on the record.</span></span></h3>
+            <p>On both lines, weight and dimensions come straight from the plant's scales and gauges and are checked against the specification for the size. Solid lines also record the ultrasound verdict and hardness per layer. The instruments measure; the inspector decides.</p>
+            <ul><li>Weight and size · both lines</li><li>Pass or fail vs spec</li><li>Ultrasound · solid</li><li>Shore A per layer · solid</li></ul>
+          </article>
+          <article class="ft-item" data-i="4">
             <h3><span class="ln"><span>Catch the drift</span></span><span class="ln"><span>before the scrap.</span></span></h3>
             <p>Statistical rules watch weight, hardness and size by build line, mould and press. A drift toward a limit raises an alert while every tyre still passes.</p>
             <ul><li>Drift alerts</li><li>Rubber giveaway</li><li>Supervisor alerts</li></ul>
           </article>
-          <article class="ft-item" data-i="4">
+          <article class="ft-item" data-i="5">
+            <span class="ft-tag">Solid lines only</span>
             <h3><span class="ln"><span>See the core</span></span><span class="ln"><span>the surface hides.</span></span></h3>
-            <p>Thick rubber cures from the outside in. Tyode turns each press's temperature log into an estimate of how well the core cured, checked first against a thermocouple inside a test tyre, and sends doubtful tyres to ultrasound first.</p>
+            <p>Thick solid rubber cures from the outside in. Tyode turns each press's temperature log into an estimate of how well the core cured, checked first against a thermocouple inside a test tyre, and sends doubtful tyres to ultrasound first.</p>
             <ul><li>Press loggers</li><li>Validated model</li><li>Risk-based checks</li></ul>
           </article>
-          <article class="ft-item" data-i="5">
+          <article class="ft-item" data-i="6">
             <h3><span class="ln"><span>Find the cause,</span></span><span class="ln"><span>not someone to blame.</span></span></h3>
             <p>Defect rates are compared across presses, moulds, batches and cure curves, with sample sizes shown. Engineers get a lead to check, and the cost in rupees.</p>
             <ul><li>Process clues</li><li>Cost of poor quality</li><li>Mould life</li></ul>
+          </article>
+          <article class="ft-item" data-i="7">
+            <h3><span class="ln"><span>An AI detective</span></span><span class="ln"><span>that shows its working.</span></span></h3>
+            <p>When a rule fires, the AI Root-Cause Detective compares failed tyres with good ones, ranks the likely causes and drafts a report with every source cited. An engineer approves it; the AI never places a hold. Ask Tyode answers plain-language questions from the same records.</p>
+            <ul><li>Every source cited</li><li>Engineer approves</li><li>Runs on a local model</li><li>Ask Tyode</li></ul>
           </article>
         </div>
 
         <div class="ft-rulebox" aria-hidden="true">
           <div class="ft-groups"><span id="ft-g0" class="on">Trace</span><span id="ft-g1">Check</span><span id="ft-g2">Explain</span></div>
-          <span class="ft-rule"><i class="ft-tick" style="left:33.333%"></i><i class="ft-tick" style="left:66.667%"></i><span class="ft-marker"></span></span>
+          <span class="ft-rule"><i class="ft-tick" style="left:37.5%"></i><i class="ft-tick" style="left:62.5%"></i><span class="ft-marker"></span></span>
           <ol class="ft-names">
-            <li style="--i:0"><button data-go="0" tabindex="-1">Passport</button></li>
-            <li style="--i:.2"><button data-go="1" tabindex="-1">Containment</button></li>
-            <li style="--i:.4"><button data-go="2" tabindex="-1">Checks</button></li>
-            <li style="--i:.6"><button data-go="3" tabindex="-1">Drift</button></li>
-            <li style="--i:.8"><button data-go="4" tabindex="-1">Core cure</button></li>
-            <li style="--i:1"><button data-go="5" tabindex="-1">Clues</button></li>
+            <li style="--i:0"><button data-go="0" tabindex="-1">Count</button></li>
+            <li style="--i:.142857"><button data-go="1" tabindex="-1">Passport</button></li>
+            <li style="--i:.285714"><button data-go="2" tabindex="-1">Contain</button></li>
+            <li style="--i:.428571"><button data-go="3" tabindex="-1">Checks</button></li>
+            <li style="--i:.571429"><button data-go="4" tabindex="-1">Drift</button></li>
+            <li style="--i:.714286"><button data-go="5" tabindex="-1">Core cure</button></li>
+            <li style="--i:.857143"><button data-go="6" tabindex="-1">Clues</button></li>
+            <li style="--i:1"><button data-go="7" tabindex="-1">AI</button></li>
           </ol>
         </div>
       </div>
 
       <div class="ft-screen" id="ft-screen" aria-hidden="true">
-        <div class="ft-hud"><span class="rec"><i></i><span id="ft-hud-l">Trace / Passport</span></span><span class="clk"><span id="ft-clock">Pilot line · 02:14:09</span><span id="ft-hud-r">01 / 06</span></span></div>
+        <div class="ft-hud"><span class="rec"><i></i><span id="ft-hud-l">Trace / Green tyre count</span></span><span class="clk"><span id="ft-clock">Pilot line · 02:14:09</span><span id="ft-hud-r">01 / 08</span></span></div>
         <div id="ft-scenes-desk"></div>
         <div class="ft-bloom"></div><div class="ft-sheen"></div><div class="ft-prog"><i></i></div>
-        <div class="ft-foot"><div class="ft-readout" id="ft-readout"><small>Passport</small><b>8</b> of 8 stages</div><span>Concept visual · sample data</span></div>
+        <div class="ft-foot"><div class="ft-readout" id="ft-readout"><small>Machine count</small><b>104</b> builds, <em>log said 120</em></div><span>Concept visual · sample data</span></div>
       </div>
 
       <!-- mobile / reduced motion: stacked cards (filled by script) -->
