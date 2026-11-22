@@ -1688,13 +1688,13 @@ export default function HeroVideo({
                 <span>One passport.</span>
               </span>
               <span className={styles.line}>
-                <span>Every solid tyre.</span>
+                <span>Every tyre.</span>
               </span>
             </h1>
             <p className={styles.body}>
-              A digital passport that follows each solid tyre from compound batch to export
-              container, keeps its quality results and helps explain why a tyre failed, all
-              without interrupting production.
+              One traceability and defect intelligence system that gives every solid and
+              pneumatic tyre a Digital Passport, following it from compound batch to export
+              container without interrupting production.
             </p>
             <div className={styles.layers} aria-hidden="true">
               <span className={styles.rule}>
@@ -1713,7 +1713,7 @@ export default function HeroVideo({
           <p className={styles.caption}>
             Every tyre traced.
             <br />
-            Every fault explained.
+            Likely causes surfaced.
           </p>
         </div>
       </div>
