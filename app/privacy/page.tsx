@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const UPDATED = "17 November 2026";
+const UPDATED = "22 November 2026";
 
 const sections: LegalSection[] = [
   {
@@ -62,12 +62,76 @@ const sections: LegalSection[] = [
               <td>IP address, browser type and pages requested, in server logs</td>
               <td>To deliver the site and keep it secure</td>
             </tr>
+            <tr>
+              <td>Visiting the site</td>
+              <td>Anonymous page views from Vercel Web Analytics, and page speed measurements from Vercel Speed Insights</td>
+              <td>To see which pages are useful and keep the site fast</td>
+            </tr>
           </tbody>
         </table>
         <p>
-          We do not use analytics, advertising trackers or tracking cookies on this website. The live demo and the
-          counting visual on the home page run entirely in your browser on sample data, and anything you type into the
-          demo&apos;s search box is not sent to us.
+          We do not use advertising trackers or tracking cookies on this website. The live demo and the counting visual
+          on the home page run entirely in your browser on sample data, and anything you type into the demo&apos;s
+          search box is not sent to us.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "analytics",
+    title: "Analytics and page speed",
+    body: (
+      <>
+        <p>
+          We use two tools from Vercel, our hosting provider, to understand how the site is used. Neither sets cookies,
+          neither shows ads, and neither tells us who you are.
+        </p>
+        <ul>
+          <li>
+            <b>Vercel Web Analytics</b> counts page views. For each visit it records the page, the site you came from,
+            your approximate location (country, region and city), and your browser, operating system and device type.
+            Visitors are counted using an anonymous code made from the request, which is thrown away after 24 hours, so
+            visits cannot be linked across days or back to you. Your IP address is not stored with this data.
+          </li>
+          <li>
+            <b>Vercel Speed Insights</b> measures how quickly each page loads and responds (the Core Web Vitals). With
+            each measurement it records the page, your browser, operating system, device type, connection speed and
+            country. It does not track you from page to page.
+          </li>
+        </ul>
+        <p>
+          We only see totals, such as how many people opened a page or how fast it loaded on phones. You can read more
+          in Vercel&apos;s{" "}
+          <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noopener noreferrer">
+            Web Analytics privacy page
+          </a>{" "}
+          and{" "}
+          <a href="https://vercel.com/docs/speed-insights/privacy-policy" target="_blank" rel="noopener noreferrer">
+            Speed Insights privacy page
+          </a>
+          .
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "forms",
+    title: "What happens to your form and booking details",
+    body: (
+      <>
+        <ul>
+          <li>
+            <b>Get in touch form:</b> when you press send, your name, email, company and message go from your browser
+            to Web3Forms, which emails them to our team inbox. We use them only to reply to you.
+          </li>
+          <li>
+            <b>Booking a walkthrough:</b> the booking window is run by Cal.com. Your name, email, chosen time and any
+            notes are stored in our Cal.com account, and Cal.com emails the confirmation to you and to us. We use them only to hold the meeting.
+          </li>
+        </ul>
+        <p>
+          We never add you to a mailing list or send you marketing because you used either one. Both are kept for the
+          time set out in &ldquo;How long we keep it&rdquo; below, and you can ask us to delete them at any time.
         </p>
       </>
     ),
@@ -80,7 +144,8 @@ const sections: LegalSection[] = [
         <p>
           We use the details you send us because you asked us to reply or to book a meeting, and because we have a
           legitimate interest in answering enquiries about Tyode. We use server logs because they are needed to run
-          the site safely. We never use your data for anything unrelated to these purposes, and we never sell it.
+          the site safely, and anonymous analytics because we have a legitimate interest in knowing which pages are
+          useful and keeping the site fast. We never use your data for anything unrelated to these purposes, and we never sell it.
         </p>
       </>
     ),
@@ -93,7 +158,7 @@ const sections: LegalSection[] = [
         <p>We use a small number of services to run the website. Each one only gets what it needs:</p>
         <ul>
           <li>
-            <b>Vercel</b> hosts the website and keeps short-lived request logs.
+            <b>Vercel</b> hosts the website, keeps short-lived request logs, and runs Web Analytics and Speed Insights.
           </li>
           <li>
             <b>Web3Forms</b> receives the Get in touch form and forwards it to our email.
@@ -120,8 +185,8 @@ const sections: LegalSection[] = [
       <>
         <p>
           We keep enquiries and booking details for as long as we are talking with you, and for up to 24 months after
-          our last contact, unless you ask us to delete them sooner. Hosting logs are kept by Vercel for a short period
-          under its own retention rules.
+          our last contact, unless you ask us to delete them sooner. Hosting logs, analytics and speed data are kept by
+          Vercel under its own retention rules.
         </p>
       </>
     ),
@@ -202,7 +267,8 @@ export default function PrivacyPage() {
         <>
           <p>
             <b>The short version:</b> we only collect what you send us through the contact form, a booking or an email.
-            We use it to reply to you, we never sell it, and there are no trackers or ads on this site.
+            We use it to reply to you and we never sell it. We count page views and page speed with cookie-free,
+            anonymous analytics, and there are no ads or tracking cookies on this site.
           </p>
         </>
       }

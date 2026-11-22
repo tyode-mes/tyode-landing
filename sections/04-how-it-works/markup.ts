@@ -1,10 +1,16 @@
-/* Static markup for section 04 (how it works): copy, labels, passport. The 3D tyre is drawn into the canvas.
+/* Static markup for section 04 (how it works): copy, labels, passport. The 3D tyre (a solid tyre) is drawn into the canvas;
+   the "On a pneumatic line" note explains how the other line type differs and links to the walkthrough at /passport.
    Edit text here. Codes are sample data. */
 export const HOW_IT_WORKS_MARKUP = String.raw`
   <header class="h3-intro">
     <span class="h3-eyebrow">How it works</span>
     <h2 id="h3-title"><span class="ln"><span>Eight stages.</span></span><span class="ln"><span>One scan each.</span></span></h2>
-    <p>Every solid tyre gets an ID on its steel band. From there, each station adds what it knows, and the passport builds itself as the tyre moves through the plant.</p>
+    <p>The tyre below is a solid tyre. It gets an ID on its steel band, then each station adds what it knows, and the passport builds itself as the tyre moves through the plant.</p>
+    <div class="h3-alt">
+      <b>On a pneumatic line</b>
+      <span>There is no steel band. The ID is a printed label applied at the building machine, the count comes from the machine's own signal, and the tyre is cured in a bladder press. The passport builds the same way.</span>
+      <a href="/passport">Walk through a pneumatic line <i aria-hidden="true">&rarr;</i></a>
+    </div>
   </header>
 
   <div class="h3-scroll">
@@ -72,6 +78,22 @@ export const HOW_IT_WORKS_MARKUP = String.raw`
 
   <div class="h3-close">
     <h2>Nothing written by hand.<br><span>Nothing lost on the way.</span></h2>
+    <div class="h3-cmp">
+      <h3>From paper to proof.</h3>
+      <div class="h3-cmp-card">
+        <table>
+          <caption class="h3-sr">How a tyre plant works today, compared with Tyode</caption>
+          <thead><tr><th scope="col">Today</th><th scope="col">With Tyode</th></tr></thead>
+          <tbody>
+        <tr><td data-label="Today">Green tyres are counted by hand at the end of a shift</td><td data-label="With Tyode">Every tyre is counted by the machine the moment it is built</td></tr>
+        <tr><td data-label="Today">A tyre's history is spread across paper forms</td><td data-label="With Tyode">One scan opens its full Digital Passport</td></tr>
+        <tr><td data-label="Today">Defect causes are debated from experience</td><td data-label="With Tyode">Likely causes are ranked by statistical evidence, every source cited</td></tr>
+        <tr><td data-label="Today">A suspect batch means searching records for days</td><td data-label="With Tyode">Every affected tyre is found and held in one action</td></tr>
+        <tr><td data-label="Today">Questions go to whoever kept the paperwork</td><td data-label="With Tyode">Anyone can ask Tyode in plain language</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <a class="h3-next" href="#features">See what it finds <i aria-hidden="true">&darr;</i></a>
   </div>
 `;
