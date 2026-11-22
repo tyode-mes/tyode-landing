@@ -27,6 +27,8 @@ export const metadata: Metadata = {
   keywords: [
     "solid tyre",
     "solid tyre manufacturing",
+    "pneumatic tyre",
+    "green tyre counting",
     "tyre traceability",
     "digital product passport",
     "process intelligence",
