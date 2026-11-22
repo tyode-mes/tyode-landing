@@ -6,6 +6,23 @@ export const OVERVIEW_MARKUP = String.raw`
     <p>Today a tyre's history lives on paper, so a defect, a claim or an audit takes days to answer. Tyode gives every tyre, solid or pneumatic, a Digital Passport from the moment it is built, and turns what the line records into decisions your team can act on.</p>
   </header>
 
+  <div class="ov-cmp">
+    <h3 class="ov-sub"><span class="ln"><span>From paper to proof.</span></span></h3>
+    <div class="ov-cmp-card">
+      <table>
+        <caption class="ov-sr">How a tyre plant works today, compared with Tyode</caption>
+        <thead><tr><th scope="col">Today</th><th scope="col">With Tyode</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Today">Green tyres are counted by hand at the end of a shift</td><td data-label="With Tyode">Every tyre is counted by the machine the moment it is built</td></tr>
+          <tr><td data-label="Today">A tyre's history is spread across paper forms</td><td data-label="With Tyode">One scan opens its full Digital Passport</td></tr>
+          <tr><td data-label="Today">Defect causes are debated from experience</td><td data-label="With Tyode">Likely causes are ranked by statistical evidence, every source cited</td></tr>
+          <tr><td data-label="Today">A suspect batch means searching records for days</td><td data-label="With Tyode">Every affected tyre is found and held in one action</td></tr>
+          <tr><td data-label="Today">Questions go to whoever kept the paperwork</td><td data-label="With Tyode">Anyone can ask Tyode in plain language</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="ov-desks">
     <h3 class="ov-sub"><span class="ln"><span>Built for every desk in the plant.</span></span></h3>
     <div class="ov-grid">

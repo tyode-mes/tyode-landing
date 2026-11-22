@@ -44,6 +44,25 @@
   transition:opacity 1s var(--ease) .45s,transform 1s var(--ease) .45s}
 .ov .ov-head.in p{opacity:1;transform:none}
 
+/* today vs with Tyode: a two-column table; each row becomes a small card on phones */
+.ov .ov-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ov .ov-cmp{max-width:1240px;margin:clamp(64px,10vh,112px) auto 0}
+.ov .ov-cmp-card{border-radius:26px;background:rgb(255 255 255 / .62);border:1px solid rgb(255 255 255 / .85);box-shadow:0 30px 60px -46px rgb(0 0 0 / .4);
+  padding:clamp(8px,1vw,14px) clamp(22px,2.4vw,36px)}
+.ov .ov-cmp table{width:100%;border-collapse:collapse;table-layout:fixed;text-align:left}
+.ov .ov-cmp th{padding:18px 0 14px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.ov .ov-cmp th + th{color:var(--ink)}
+.ov .ov-cmp td{padding:18px 0;border-top:1px solid var(--hair);font-size:clamp(15px,1.2vw,17px);line-height:1.45;vertical-align:top}
+.ov .ov-cmp td:first-child{padding-right:clamp(20px,3vw,48px);color:var(--ink-2)}
+.ov .ov-cmp td + td{position:relative;padding-left:22px;color:var(--ink);font-weight:500}
+.ov .ov-cmp td + td::before{content:"";position:absolute;left:0;top:calc(18px + .75em);width:7px;height:7px;border-radius:50%;background:var(--sig);transform:translateY(-50%)}
+.ov .ov-cmp tbody tr{opacity:0;transform:translateY(12px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.ov .ov-cmp:has(.ov-sub.in) tbody tr{opacity:1;transform:none}
+.ov .ov-cmp tbody tr:nth-child(2){transition-delay:.08s}
+.ov .ov-cmp tbody tr:nth-child(3){transition-delay:.16s}
+.ov .ov-cmp tbody tr:nth-child(4){transition-delay:.24s}
+.ov .ov-cmp tbody tr:nth-child(5){transition-delay:.32s}
+
 /* built for every desk */
 .ov .ov-desks{max-width:1240px;margin:clamp(64px,10vh,112px) auto 0}
 .ov .ov-sub{margin:0 0 clamp(24px,4vh,40px);font-size:clamp(1.6rem,2.6vw,2.4rem);font-weight:600;letter-spacing:-.045em;line-height:1.05}
@@ -123,6 +142,17 @@
 }
 @media (max-width:620px){
   .ov .ov-grid{grid-template-columns:1fr}
+  .ov .ov-cmp-card{padding:6px 20px}
+  .ov .ov-cmp thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .ov .ov-cmp table,.ov .ov-cmp tbody,.ov .ov-cmp tr,.ov .ov-cmp td{display:block}
+  .ov .ov-cmp tbody tr{padding:18px 0;border-top:1px solid var(--hair)}
+  .ov .ov-cmp tbody tr:first-child{border-top:0}
+  .ov .ov-cmp td{padding:0;border:0}
+  .ov .ov-cmp td:first-child{padding-right:0}
+  .ov .ov-cmp td + td{margin-top:10px}
+  .ov .ov-cmp td + td{padding-left:0}
+  .ov .ov-cmp td[data-label]::before,.ov .ov-cmp td + td[data-label]::before{content:attr(data-label);position:static;display:block;width:auto;height:auto;margin-bottom:4px;border-radius:0;background:none;transform:none;
+    font-size:11.5px;font-weight:600;color:var(--ink-2)}
   .ov .ov-floor ul{grid-template-columns:1fr}
 }
 @media (hover:none){
@@ -132,6 +162,6 @@
   .ov *,.ov *::before,.ov *::after,.ov::before{animation:none!important;transition:none!important}
   .ov::before{opacity:1;transform:translateX(-50%)}
   .ov .ln > span,.ov .ov-head h2{transform:none;opacity:1;letter-spacing:-.055em}
-  .ov .ov-kicker,.ov .ov-head p,.ov .ov-tile,.ov .ov-eb,.ov .ov-tile h3,.ov .ov-tile p,.ov .ov-floor li,.ov .ov-close{opacity:1;transform:none}
+  .ov .ov-cmp tbody tr,.ov .ov-kicker,.ov .ov-head p,.ov .ov-tile,.ov .ov-eb,.ov .ov-tile h3,.ov .ov-tile p,.ov .ov-floor li,.ov .ov-close{opacity:1;transform:none}
   .ov .ov-floor::before,.ov .ov-floor li::before,.ov .ov-tile svg .sig,.ov .ov-tile svg .dot{transform:none}
 }
