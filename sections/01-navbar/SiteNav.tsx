@@ -9,12 +9,12 @@ import { scrollBus } from "@/lib/scrollBus";
 import styles from "./SiteNav.module.css";
 
 /**
- * Floating navigation: a dark capsule over the page. Logo on the left (it draws itself in on
- * load; hover it to see its guide lines), links in the middle, a call-to-action on the right,
- * and a fine line along the bottom edge that fills as you scroll down the page. It tightens
- * gradually as you scroll down the first part of the page. On small screens the links fold into a menu button.
+- Floating navigation: a dark capsule over the page. Logo on the left (it draws itself in on
+- load; hover it to see its guide lines), links in the middle, a call-to-action on the right,
+- and a fine line along the bottom edge that fills as you scroll down the page. It tightens
+- gradually as you scroll down the first part of the page. On small screens the links fold into a menu button.
  *
- * Links point at the section ids in /sections (see app/page.tsx).
+- Links point at the section ids in /sections (see app/page.tsx).
  */
 const LINKS = [
   { href: "#overview", label: "Overview" },
@@ -79,7 +79,6 @@ export default function SiteNav() {
               <TyodeMark pad={PAD} settle />
             </span>
           </a>
-          <span className={styles.tag}>Solid Tyre Passport</span>
         </div>
 
         <nav className={styles.links} aria-label="Main" onPointerLeave={() => setPill(null)}>
