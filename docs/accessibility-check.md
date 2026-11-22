@@ -15,9 +15,11 @@ B8 technical requirements: responsive on mobile, tablet and desktop, no broken l
 | --- | --- | --- | --- |
 | Before, mobile | 92 | 100 | 96 |
 | Before, desktop | 92 | 100 | 96 |
-| After fixes, mobile | _to fill in_ | | |
-| After fixes, desktop | _to fill in_ | | |
+| After fix 1, mobile | 92 | 100 | 96 |
+| After fix 1, desktop | 92 | 100 | 96 |
 | Live site (tyode.com) | _to fill in_ | | |
+
+Fix 1 removed the How it works closing line from the contrast results. The Accessibility score stays at 92 because Lighthouse fails the whole contrast audit while any element fails it, and the elements still failing are all in Features (fix 2). Once fix 2 and the footer tap targets (fix 3) are in, re-run and add a row: the score should rise to about 98–100.
 
 Best Practices loses points only because the Vercel Analytics and Speed Insights scripts return 404 outside Vercel. On the live site they load normally, so this is not a real issue.
 
@@ -30,9 +32,10 @@ Best Practices loses points only because the Vercel Analytics and Speed Insights
 - [x] The new Today / With Tyode block is a real table with column headers and a caption
 
 ### Colour contrast
-- [ ] **How it works, closing line** ("Nothing lost on the way."): #8a8a90 on #ececed = 2.9:1, needs 3:1 for large text
+- [x] **How it works, closing line** ("Nothing lost on the way."): was #8a8a90 on #ececed = 2.9:1. Now #77777c = 3.8:1, passes the 3:1 minimum for large text (fix 1)
 - [ ] **Features, closing line** (grey half of the heading): #929293 on #ececed = 2.63:1, needs 3:1
 - [ ] **Features, small note under the closing line** (11px): 2.63:1, needs 4.5:1
+- [ ] **Features, step names and group labels** (Passport, Containment… and Trace / Check / Explain): flagged on desktop. They are `aria-hidden`, but Lighthouse still checks visible text contrast
 - [ ] **/passport, step label ("kicker")**: #949495 on white = 3.03:1, needs 4.5:1
 - [ ] **/privacy and /terms, contents list**: #7c7c7d on #ececed = 3.53:1, needs 4.5:1 (26 items)
 - [ ] **/privacy and /terms, email links inside text**: only colour sets them apart (2.58:1 against the text). They need an underline.
@@ -75,9 +78,11 @@ Best Practices loses points only because the Vercel Analytics and Speed Insights
 
 | # | Issue | Where | Owner | Status | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Closing line contrast | How it works | Adeepa | Planned | `fix(a11y): …` |
-| 2 | Closing line and note contrast | Features | _ask in chat_ | Waiting | |
-| 3 | Footer link tap size | Footer | _ask in chat_ | Waiting | |
-| 4 | Spam-trap checkbox announced | Contact form | _ask in chat_ | Waiting | |
-| 5 | Progress label and step label contrast | /passport | _ask in chat_ | Waiting | |
-| 6 | Contents list contrast, links in text | /privacy, /terms | _ask in chat_ | Waiting | |
+| 1 | Closing line contrast | How it works | Adeepa | Done | `0340939` fix(a11y): raise contrast of the how-it-works closing line |
+| 2 | Closing line, note and step labels contrast | Features | Teammate (section owner) | Handed over | |
+| 3 | Footer link tap size | Footer | Teammate (section owner) | Handed over | |
+| 4 | Spam-trap checkbox announced | Contact form | Teammate (section owner) | Handed over | |
+| 5 | Progress label and step label contrast | /passport | Teammate (section owner) | Handed over | |
+| 6 | Contents list contrast, links in text | /privacy, /terms | Teammate (section owner) | Handed over | |
+
+Items 2–6 were shared in the team chat and are being fixed by the owners of those sections. Each owner should tick their item above, add their commit here, and re-run Lighthouse.
