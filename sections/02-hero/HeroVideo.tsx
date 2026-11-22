@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { scrollBus } from "@/lib/scrollBus";
 import styles from "./HeroVideo.module.css";
 
@@ -541,7 +541,6 @@ async function openFrameStream(url: string, signal: AbortSignal, maxFrames: numb
     let flushing = false;
     let dec: VideoDecoder;
 
-    // Always evict the frame farthest from the current scrub position (never thrashes on direction flip)
     const evict = () => {
       while (frames.size > maxFrames) {
         let worstIdx = -1;
@@ -660,6 +659,12 @@ export default function HeroVideo({
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const subRef = useRef<HTMLDivElement>(null);
+  const ruleRef = useRef<HTMLSpanElement>(null);
+  const fillRef = useRef<HTMLSpanElement>(null);
+  const markerRef = useRef<HTMLSpanElement>(null);
+  const captionRef = useRef<HTMLParagraphElement>(null);
+  const nameRefs = useRef<(HTMLLIElement | null)[]>([]);
   const breakRef = useRef<HTMLVideoElement>(null);
   const loopARef = useRef<HTMLVideoElement>(null);
   const loopBRef = useRef<HTMLVideoElement>(null);
@@ -883,6 +888,7 @@ export default function HeroVideo({
 
     let secTop = 0, secH = 1, vh = window.innerHeight;
     let cssW = window.innerWidth, cssH = window.innerHeight;
+    let ruleW = 0;
     const measure = () => {
       cssW = canvas.clientWidth || window.innerWidth;
       cssH = canvas.clientHeight || window.innerHeight;
@@ -890,6 +896,14 @@ export default function HeroVideo({
       secTop = r.top + window.scrollY;
       secH = section.offsetHeight;
       vh = window.innerHeight;
+
+      // Keep desktop .sub aligned to integer CSS pixels so GPU layer rasterizes sharp at rest
+      const gut = clamp(cssW * 0.04, 20, 56);
+      overlay.style.setProperty("--sub-l", `${Math.round(cssW * 0.3)}px`);
+      overlay.style.setProperty("--sub-r", `${Math.round(cssW * 0.21)}px`);
+      overlay.style.setProperty("--sub-b", `${Math.round(gut * 0.45)}px`);
+      ruleW = ruleRef.current?.clientWidth || 0;
+
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
       curDpr = dpr;
       if (fontsLoaded && Math.abs(dpr - labelDpr) > 0.01) drawTitle(dpr);
@@ -990,7 +1004,6 @@ export default function HeroVideo({
         if (st && st.count === BREAK_LAST - BREAK_FIRST + 1) {
           stream = st;
           streamState = "ready";
-          // Immediately warm opening ramp so first scroll is 0ms instant
           st.want(38 - BREAK_FIRST, 2);
         } else {
           st?.close();
@@ -1032,7 +1045,6 @@ export default function HeroVideo({
     let pendingTime = 0;
     let pendingFrame = 0;
 
-    // Cinema-weighted scrub state (silky inertia synced to scrollBus)
     let eS = 0;
     let anchorLo = 44;
     let anchorHi = 109;
@@ -1049,8 +1061,13 @@ export default function HeroVideo({
     let hasFrame = false;
     let firstFrameAt = 0;
     let wasVisible = true;
-    let cssP = "", cssX = "", cssY = "";
     let captionOn = false;
+    let lastSubTf = "";
+    let lastSubOp = "";
+    let lastScan = -1;
+    let lastCapTf = "";
+    let lastCapOp = "";
+    const lastNameOps = new Array<string>(LAYERS.length).fill("");
 
     let frameAt = 0;
     let frameGap = 1000 / FPS;
@@ -1094,7 +1111,6 @@ export default function HeroVideo({
       if (running || document.hidden) return;
       running = true;
       last = performance.now();
-      // scrollBus.subscribe() can call this before `frame` below is defined, so look it up only when the frame runs
       raf = requestAnimationFrame((now) => frame(now));
     };
 
@@ -1141,7 +1157,6 @@ export default function HeroVideo({
       const useStream = streamState === "ready" && stream !== null;
       const streamFirst = streamState === "loading" || useStream;
 
-      // Wide, cinema-weighted scrub curve synced smoothly to scrollBus.y
       const breakPx = Math.max(secH - vh * (1 + EXIT.span), 1);
       const target = clamp((scrollY - secTop) / breakPx, 0, 1);
       const exitTarget = clamp((scrollY - secTop - breakPx + EXIT.lead * vh) / ((EXIT.span + EXIT.lead) * vh), 0, 1);
@@ -1164,7 +1179,6 @@ export default function HeroVideo({
       msX += mvX * dt;
       msY += mvY * dt;
 
-      // Spread explosion across 88% of Hero track & glide with silky mechanical weight
       const eTarget = smooth(0, 0.88, target);
       eS += (eTarget - eS) * (1 - Math.exp(-dt * 7.5));
       if (Math.abs(eTarget - eS) < 0.00025) eS = eTarget;
@@ -1184,7 +1198,6 @@ export default function HeroVideo({
           loadRest();
           settleOffset = settleTarget = 0;
           settlePlanned = false;
-          // Preserve current video texture in newestTex so the first frame of T crossfades smoothly
           texF[newestTex] = f;
           texF[1 - newestTex] = -1;
           fPrev = f;
@@ -1196,7 +1209,6 @@ export default function HeroVideo({
           if (streamFirst) stream?.want(f - BREAK_FIRST, 1);
           else vT.currentTime = pendingTime;
         } else if (!leaving && !pendingTo && useStream) {
-          // Hand off seamlessly to direct-decode stream as soon as the current frame is decoded
           const f = loop[indexAt(v.currentTime, loop.length)];
           stream!.want(f - BREAK_FIRST, 0);
           if (stream!.get(f - BREAK_FIRST)) {
@@ -1227,7 +1239,6 @@ export default function HeroVideo({
         const midway = eTarget > 0.004 && eTarget < 0.996;
         const trulyIdle = stillFor > 0.45;
 
-        // Gently settle onto nearest crisp frame only after glide has completely finished
         if (!trulyIdle || !midway) {
           settleTarget = 0;
           settlePlanned = false;
@@ -1248,7 +1259,6 @@ export default function HeroVideo({
         }
         settleOffset += (settleTarget - settleOffset) * (1 - Math.exp(-dt * 3.5));
 
-        // Phase-continuous gentle idle sway at top/bottom (starts at exact current frame - zero snap!)
         let idleDelta = 0;
         if (useStream && trulyIdle && !midway && !calm) {
           const side = eTarget < 0.5 ? -1 : 1;
@@ -1427,7 +1437,6 @@ export default function HeroVideo({
 
       const aspect = texW / (texH * 0.5);
 
-      // ---- Smooth temporal frame blending (no hard cuts even on brisk scrubs or video-seek fallback) ----
       let blendFrom = 1 - newestTex;
       let blendTo = newestTex;
       let blendMix = smooth(0, 1, clamp((now - frameAt) / frameGap, 0, 1));
@@ -1440,7 +1449,6 @@ export default function HeroVideo({
           blendTo = hiIdx;
           blendMix = clamp((fNow - texF[loIdx]) / span, 0, 1);
         } else if (span > 0) {
-          // Video-seek fallback or rapid jump: smoothly dissolve into newestTex over frameGap
           blendFrom = 1 - newestTex;
           blendTo = newestTex;
           blendMix = smooth(0, 1, clamp((now - frameAt) / Math.max(frameGap, 50), 0, 1));
@@ -1451,7 +1459,6 @@ export default function HeroVideo({
         }
       }
 
-      // ---- Scroll choreography ----
       const intro = 1 - smooth(0, 2.4, t - firstFrameAt);
       const introE = intro * intro;
       const sep = (eS * 0.18 + holdMix * 0.03 * (0.5 + 0.5 * Math.sin(t * 0.5))) * (1 - introE);
@@ -1580,7 +1587,6 @@ export default function HeroVideo({
         gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -roll * 0.9, BAND.opacity * tA);
         gl.uniform1f(postProg.u("uBandX"), cssW * 0.5 * kk);
 
-        // Replace the old Math.round lines here:
         const lx0 = cssW * BAND.labelX * kk;
         const lFits = labelW > 0 && lx0 + labelW < outW - 12 * kk;
         gl.uniform3f(postProg.u("uLabelBox"), lx0, lx0 + (lFits ? labelW : 0), labelH);
@@ -1613,17 +1619,51 @@ export default function HeroVideo({
       gl.bindVertexArray(null);
       gl.activeTexture(gl.TEXTURE0);
 
-      const p3 = prog.toFixed(3);
-      const x3 = msX.toFixed(3);
-      const y3 = msY.toFixed(3);
-      if (p3 !== cssP) overlay.style.setProperty("--p", (cssP = p3));
-      if (x3 !== cssX) overlay.style.setProperty("--mx", (cssX = x3));
-      if (y3 !== cssY) overlay.style.setProperty("--my", (cssY = y3));
+      // Direct GPU-composited overlay updates (zero per-frame CSS variable recalc or layout thrash)
+      const sub = subRef.current;
+      if (sub) {
+        const subOp = clamp(1 - prog * 2.2, 0, 1);
+        const subOpStr = subOp.toFixed(4);
+        if (subOpStr !== lastSubOp) sub.style.opacity = lastSubOp = subOpStr;
+        if (subOp > 0.001) {
+          const sx = -msX * 8;
+          const sy = msY * 4 - prog * 0.06 * cssH;
+          const tf = `translate3d(${sx.toFixed(2)}px, ${sy.toFixed(2)}px, 0)`;
+          if (tf !== lastSubTf) sub.style.transform = lastSubTf = tf;
+
+          const scan = clamp(prog / 0.42, 0, 1);
+          if (Math.abs(scan - lastScan) > 0.0005) {
+            lastScan = scan;
+            if (fillRef.current) fillRef.current.style.transform = `scaleX(${scan.toFixed(4)})`;
+            if (markerRef.current) markerRef.current.style.transform = `translate3d(${(scan * ruleW).toFixed(2)}px, 0, 0)`;
+            for (let i = 0; i < LAYERS.length; i++) {
+              const li = nameRefs.current[i];
+              if (!li) continue;
+              const pos = i / (LAYERS.length - 1);
+              const op = clamp(1 - Math.abs(scan - pos) * 5, 0.42, 1).toFixed(3);
+              if (op !== lastNameOps[i]) {
+                lastNameOps[i] = op;
+                li.style.opacity = op;
+              }
+            }
+          }
+        }
+      }
+
       const capOn = prog > 0.4 && prog < 0.99;
       if (capOn !== captionOn) {
         captionOn = capOn;
         if (capOn) overlay.dataset.caption = "";
         else delete overlay.dataset.caption;
+      }
+      const cap = captionRef.current;
+      if (cap && capOn) {
+        const capOp = clamp(Math.min((prog - 0.42) * 6, (0.97 - prog) * 6), 0, 1).toFixed(4);
+        if (capOp !== lastCapOp) cap.style.opacity = lastCapOp = capOp;
+        const cx = -msX * 14;
+        const cy = (0.7 - prog) * 0.08 * cssH;
+        const ctf = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0)`;
+        if (ctf !== lastCapTf) cap.style.transform = lastCapTf = ctf;
       }
     };
 
@@ -1697,7 +1737,7 @@ export default function HeroVideo({
             <span className={styles.pill}>Trace · Check · Explain</span>
           </div>
 
-          <div className={styles.sub}>
+          <div ref={subRef} className={styles.sub}>
             <h1 className={styles.lead}>
               <span className={styles.line}>
                 <span>One passport.</span>
@@ -1712,12 +1752,18 @@ export default function HeroVideo({
               container without interrupting production.
             </p>
             <div className={styles.layers} aria-hidden="true">
-              <span className={styles.rule}>
-                <span className={styles.marker} />
+              <span ref={ruleRef} className={styles.rule}>
+                <span ref={fillRef} className={styles.fill} />
+                <span ref={markerRef} className={styles.marker} />
               </span>
               <ol className={styles.names}>
                 {LAYERS.map((name, i) => (
-                  <li key={name} style={{ "--i": i / (LAYERS.length - 1) } as CSSProperties}>
+                  <li
+                    key={name}
+                    ref={(el) => {
+                      nameRefs.current[i] = el;
+                    }}
+                  >
                     {name}
                   </li>
                 ))}
@@ -1725,7 +1771,7 @@ export default function HeroVideo({
             </div>
           </div>
 
-          <p className={styles.caption}>
+          <p ref={captionRef} className={styles.caption}>
             Every tyre traced.
             <br />
             Likely causes surfaced.
