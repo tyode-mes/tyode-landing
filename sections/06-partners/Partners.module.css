@@ -21,8 +21,8 @@
 .cell{position:relative;display:grid;place-items:center;height:clamp(150px,18vw,200px);padding:24px}
 .cell + .cell::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--hair)}
 /* ---------- hover ----------
-   Apple-style: after a brief pause (so brushing past doesn't trigger it) the logo eases from
-   grey into its own colour while growing a touch, and a soft light blooms behind it. Going in
+   Logos always show in their own colours. Apple-style: after a brief pause (so brushing past
+   doesn't trigger it) the logo grows a touch and a soft light blooms behind it. Going in
    is slow and even; letting go is a little quicker, so it never feels sticky. */
 .cell::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
   background:radial-gradient(55% 65% at 50% 50%,rgb(255 255 255 / .9),rgb(255 255 255 / 0));
@@ -30,10 +30,10 @@
 .cell:hover::after{opacity:1;transition:opacity 1.8s var(--in) .1s}
 
 .cell img{position:relative;z-index:1;display:block;width:auto;max-width:82%;
-  filter:grayscale(1);opacity:.6;transform:scale(1);backface-visibility:hidden;
-  transition:filter 1s var(--out),opacity 1s var(--out),transform 1.2s var(--out)}
-.cell:hover img{filter:grayscale(0);opacity:1;transform:scale(1.035);
-  transition:filter 1.8s var(--in) .1s,opacity 1.8s var(--in) .1s,transform 2.4s var(--in) .1s}
+  transform:scale(1);backface-visibility:hidden;
+  transition:transform 1.2s var(--out)}
+.cell:hover img{transform:scale(1.035);
+  transition:transform 2.4s var(--in) .1s}
 
 /* gentle reveal as the panel scrolls into view (browsers without scroll timelines just show it) */
 @supports (animation-timeline: view()){
@@ -48,8 +48,8 @@
   .cell + .cell::before{left:18%;right:18%;top:0;bottom:auto;width:auto;height:1px}
   .cell img{max-height:52px}
 }
-/* touch screens never hover: show the logos in full colour instead */
-@media (hover:none){.cell::after{display:none}.cell img{filter:none;opacity:1}}
+/* touch screens never hover: no bloom */
+@media (hover:none){.cell::after{display:none}}
 @media (prefers-reduced-motion:reduce){
   .head,.panel{animation:none}
   .cell img,.cell::after,.cell:hover img,.cell:hover::after{transition:none}
