@@ -6,10 +6,9 @@ export const FEATURES_MARKUP = String.raw`
   <template id="ft-scenes">
     <!-- 01 GREEN TYRE COUNT (pilot) -->
     <div class="sc" data-s="0"><svg viewBox="0 0 800 460" aria-hidden="true">
-      <g class="pop" style="--d:.1s"><text x="60" y="40">Building machine BM-04 · no PLC</text>
-      <text x="60" y="66" class="tx-ink" style="font-size:16px;letter-spacing:0;text-transform:none">Counted from its auto-stitch signal</text></g>
-      <g class="pop" style="--d:.25s"><rect class="tile" x="500" y="22" width="240" height="52" rx="26"/><circle cx="530" cy="48" r="6" fill="#f2f2f3"/>
-      <text x="548" y="52" class="tx-ink">Staff card · S-0427</text></g>
+      <g class="pop" style="--d:.1s"><text x="60" y="56">Machine BM-04 · auto-stitch signal</text></g>
+      <g class="pop" style="--d:.25s"><rect class="tile" x="520" y="28" width="220" height="48" rx="24"/><circle cx="548" cy="52" r="6" fill="#f2f2f3"/>
+      <text x="564" y="56" class="tx-ink">Staff card S-0427</text></g>
       <g class="pop" style="--d:.5s"><line class="lim" x1="90" y1="148" x2="180" y2="148"/><text x="90" y="136">Min. build time</text></g>
       <line class="hl" x1="60" y1="250" x2="740" y2="250"/>
       <path class="ln draw" style="--len:1500;--d:.3s" d="M60 250 H90 V170 H180 V250 H220 V170 H310 V250 H350 V170 H372 V250 H420 V170 H510 V250 H550 V170 H640 V250 H740"/>
