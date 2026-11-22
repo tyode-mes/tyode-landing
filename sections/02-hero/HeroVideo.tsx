@@ -1774,7 +1774,7 @@ export default function HeroVideo({
           <p ref={captionRef} className={styles.caption}>
             Every tyre traced.
             <br />
-            Likely causes surfaced.
+            Every defect explained.
           </p>
         </div>
       </div>
