@@ -6,29 +6,20 @@ export const FEATURES_MARKUP = String.raw`
   <template id="ft-scenes">
     <!-- 01 GREEN TYRE COUNT (pilot) -->
     <div class="sc" data-s="0"><svg viewBox="0 0 800 460" aria-hidden="true">
-      <g class="pop" style="--d:.1s"><text x="60" y="40">Building machine BM-04 · no PLC</text>
-      <text x="60" y="66" class="tx-ink" style="font-size:16px;letter-spacing:0;text-transform:none">Counted from its auto-stitch signal</text></g>
-      <g class="pop" style="--d:.25s"><rect class="tile" x="500" y="22" width="240" height="52" rx="26"/><circle cx="530" cy="48" r="6" fill="#f2f2f3"/>
-      <text x="548" y="52" class="tx-ink">Staff card · S-0427</text></g>
-      <g class="pop" style="--d:.5s"><line class="lim" x1="90" y1="128" x2="160" y2="128"/><text x="90" y="118">Min. build time</text></g>
-      <line class="hl" x1="60" y1="200" x2="740" y2="200"/>
-      <path class="ln draw" style="--len:1300;--d:.3s" d="M60 200 H90 V150 H180 V200 H220 V150 H310 V200 H350 V150 H372 V200 H420 V150 H510 V200 H550 V150 H640 V200 H740"/>
-      <g class="pop" style="--d:1.3s"><rect x="344" y="144" width="34" height="62" rx="6" fill="none" class="s-sig" stroke-width="1.4"/><text x="361" y="132" text-anchor="middle" class="tx-sig">Too short</text></g>
-      <g class="pop" style="--d:.8s"><text x="135" y="228" text-anchor="middle">Build 101</text></g>
-      <g class="pop" style="--d:.95s"><text x="265" y="228" text-anchor="middle">102</text></g>
-      <g class="pop" style="--d:1.3s"><text x="361" y="228" text-anchor="middle" class="tx-sig">Review</text></g>
-      <g class="pop" style="--d:1.1s"><text x="465" y="228" text-anchor="middle">103</text></g>
-      <g class="pop" style="--d:1.25s"><text x="595" y="228" text-anchor="middle" class="tx-ink">104</text></g>
-      <g class="pop" style="--d:.6s"><rect class="hl" x="60" y="262" width="200" height="108" rx="16"/><text x="82" y="290">Machine count</text>
-        <text x="82" y="344" class="tx-ink" style="font-size:40px;letter-spacing:0;font-weight:500">104</text></g>
-      <g class="pop" style="--d:.75s"><rect class="hl" x="290" y="262" width="200" height="108" rx="16"/><text x="312" y="290">Shift log said</text>
-        <text x="312" y="344" style="font-size:40px;letter-spacing:0;font-weight:500">120</text></g>
-      <g class="pop" style="--d:.9s"><rect class="hl" x="520" y="262" width="220" height="108" rx="16"/><text x="542" y="290" class="tx-sig">Gap · 16 tyres</text>
-        <text x="542" y="322" class="tx-ink" style="font-size:15px;letter-spacing:0;text-transform:none">Flagged during the shift,</text>
-        <text x="542" y="344" class="tx-ink" style="font-size:15px;letter-spacing:0;text-transform:none">14:00 to 16:00</text></g>
-      <g class="pop" style="--d:1.6s"><rect x="60" y="394" width="680" height="46" rx="23" fill="#18181a" class="s-sig" stroke-opacity=".6"/>
-        <circle cx="88" cy="417" r="6" class="f-sig"/><text x="106" y="421" class="tx-sig">Heartbeat alert · BM-07 quiet for 12 min</text>
-        <text x="716" y="421" text-anchor="end">Supervisor notified</text></g>
+      <g class="pop" style="--d:.1s"><text x="60" y="56">Machine BM-04 · auto-stitch signal</text></g>
+      <g class="pop" style="--d:.25s"><rect class="tile" x="520" y="28" width="220" height="48" rx="24"/><circle cx="548" cy="52" r="6" fill="#f2f2f3"/>
+      <text x="564" y="56" class="tx-ink">Staff card S-0427</text></g>
+      <g class="pop" style="--d:.5s"><line class="lim" x1="90" y1="148" x2="180" y2="148"/><text x="90" y="136">Min. build time</text></g>
+      <line class="hl" x1="60" y1="250" x2="740" y2="250"/>
+      <path class="ln draw" style="--len:1500;--d:.3s" d="M60 250 H90 V170 H180 V250 H220 V170 H310 V250 H350 V170 H372 V250 H420 V170 H510 V250 H550 V170 H640 V250 H740"/>
+      <g class="pop" style="--d:1.3s"><rect x="342" y="162" width="38" height="96" rx="6" fill="none" class="s-sig" stroke-width="1.4"/><text x="361" y="148" text-anchor="middle" class="tx-sig">Too short</text></g>
+      <g class="pop" style="--d:.8s"><text x="135" y="284" text-anchor="middle">101</text></g>
+      <g class="pop" style="--d:.95s"><text x="265" y="284" text-anchor="middle">102</text></g>
+      <g class="pop" style="--d:1.3s"><text x="361" y="284" text-anchor="middle" class="tx-sig">Review</text></g>
+      <g class="pop" style="--d:1.1s"><text x="465" y="284" text-anchor="middle">103</text></g>
+      <g class="pop" style="--d:1.25s"><text x="595" y="284" text-anchor="middle" class="tx-ink">104</text></g>
+      <g class="pop" style="--d:1.6s"><rect x="60" y="320" width="680" height="46" rx="23" fill="#18181a" class="s-sig" stroke-opacity=".6"/>
+        <circle cx="88" cy="343" r="6" class="f-sig"/><text x="106" y="347" class="tx-sig">Heartbeat alert · BM-07 quiet for 12 min</text></g>
     </svg></div>
 
     <!-- 02 PASSPORT -->
@@ -191,8 +182,8 @@ export const FEATURES_MARKUP = String.raw`
 
           <article class="ft-item" data-i="0">
             <h3><span class="ln"><span>Counted by machine,</span></span><span class="ln"><span>not by hand.</span></span></h3>
-            <p>Each build is read from the building machine's PLC, or from its auto-stitch signal where there is no PLC. It counts only if it meets the minimum build time for the size, and is credited to the builder signed in with a staff card. Short cycles go for review.</p>
-            <ul><li>PLC or auto-stitch</li><li>Minimum build time</li><li>Staff-card sign-in</li><li>Heartbeat alert</li></ul>
+            <p>Every build is read from the machine's PLC or auto-stitch signal, and only counts if it takes the minimum build time.</p>
+            <ul><li>Staff-card sign-in</li><li>Short cycles reviewed</li><li>Heartbeat alert</li></ul>
           </article>
           <article class="ft-item" data-i="1">
             <h3><span class="ln"><span>One tyre.</span></span><span class="ln"><span>One passport.</span></span></h3>
