@@ -230,7 +230,8 @@
   left: clamp(20px, 4vw, 56px);
   top: calc(64px + 12px + clamp(20px, 6vh, 64px));
   margin: 0;
-  font-size: clamp(1.8rem, 4.2vw, 3.6rem);
+  /* sized so the longest line ("Likely causes surfaced.") ends before the machine on the right */
+  font-size: clamp(1.6rem, 3.3vw, 3rem);
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1.02;
@@ -274,9 +275,10 @@
   }
 }
 
+/* scale only, no fade from invisible: the poster is visible from the first frame so
+   Lighthouse can measure LCP (the canvas still fades in through its own transition) */
 @keyframes sceneIn {
   from {
-    opacity: 0;
     transform: scale(1.03);
   }
 }
