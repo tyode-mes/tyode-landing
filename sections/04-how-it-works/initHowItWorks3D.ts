@@ -12,14 +12,14 @@ type Stage = {
 };
 
 const STAGES: Stage[] = [
-  { explode: 1.0, rubber: 0.12, band: 0.12, dist: 10.5, yaw: -0.75, pitch: 0.28, focus: 0, heat: 0, idGlow: 0, labels: [] },
-  { explode: 1.0, rubber: 1.0, band: 0.14, dist: 10.5, yaw: -0.65, pitch: 0.26, focus: 0, heat: 0, idGlow: 0, labels: ["base", "cush", "tread"] },
-  { explode: 1.0, rubber: 0.0, band: 1.0, dist: 6.4, yaw: -0.95, pitch: 0.12, focus: 1, heat: 0, idGlow: 1, labels: ["band"] },
-  { explode: 1.0, rubber: 1.0, band: 1.0, dist: 9.4, yaw: -0.55, pitch: 0.22, focus: 0, heat: 0, idGlow: 0.35, labels: ["band", "base", "cush", "tread"] },
-  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 9.2, yaw: -0.5, pitch: 0.18, focus: 0, heat: 1, idGlow: 0, labels: ["cure"] },
-  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 9.2, yaw: -0.62, pitch: 0.18, focus: 0, heat: 0, idGlow: 0, labels: ["check"] },
-  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 10.4, yaw: -1.25, pitch: 0.12, focus: 0, heat: 0, idGlow: 0, labels: ["store"] },
-  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 10.6, yaw: -0.38, pitch: 0.26, focus: 0, heat: 0, idGlow: 0, labels: ["ship"] },
+  { explode: 1.0, rubber: 1.0, band: 1.0, dist: 9.6, yaw: -0.72, pitch: 0.24, focus: 0, heat: 0, idGlow: 0, labels: [] },
+  { explode: 1.0, rubber: 1.0, band: 0.22, dist: 9.8, yaw: -0.62, pitch: 0.24, focus: 0, heat: 0, idGlow: 0, labels: ["base", "cush", "tread"] },
+  { explode: 1.0, rubber: 0.0, band: 1.0, dist: 6.2, yaw: -0.95, pitch: 0.12, focus: 1, heat: 0, idGlow: 1, labels: ["band"] },
+  { explode: 1.0, rubber: 1.0, band: 1.0, dist: 9.0, yaw: -0.55, pitch: 0.2, focus: 0, heat: 0, idGlow: 0.35, labels: ["band", "base", "cush", "tread"] },
+  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 8.8, yaw: -0.5, pitch: 0.18, focus: 0, heat: 1, idGlow: 0, labels: ["cure"] },
+  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 8.8, yaw: -0.62, pitch: 0.18, focus: 0, heat: 0, idGlow: 0, labels: ["check"] },
+  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 9.8, yaw: -1.22, pitch: 0.12, focus: 0, heat: 0, idGlow: 0, labels: ["store"] },
+  { explode: 0.0, rubber: 1.0, band: 1.0, dist: 10.0, yaw: -0.38, pitch: 0.24, focus: 0, heat: 0, idGlow: 0, labels: ["ship"] },
 ];
 
 const CAPTIONS_N = STAGES.length;
@@ -96,8 +96,8 @@ function shadowTexture() {
   c.width = c.height = 256;
   const g = c.getContext("2d")!;
   const grd = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grd.addColorStop(0, "rgba(0,0,0,0.55)");
-  grd.addColorStop(0.5, "rgba(0,0,0,0.18)");
+  grd.addColorStop(0, "rgba(0,0,0,0.48)");
+  grd.addColorStop(0.5, "rgba(0,0,0,0.16)");
   grd.addColorStop(1, "rgba(0,0,0,0)");
   g.fillStyle = grd;
   g.fillRect(0, 0, 256, 256);
@@ -115,8 +115,7 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const N = CAPTIONS_N;
 
-  /* Set pinned scroll track height once before measuring */
-  scroll.style.height = N * 70 + 100 + "vh";
+  scroll.style.height = N * 58 + 100 + "vh";
 
   /* ---------- renderer, scene, camera ---------- */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -132,8 +131,8 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
 
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(4, 6, 6); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xffffff, 1.2); rim.position.set(-6, 3, -4); scene.add(rim);
+  const key = new THREE.DirectionalLight(0xffffff, 1.65); key.position.set(4, 6, 6); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.25); rim.position.set(-6, 3, -4); scene.add(rim);
   const warm = new THREE.PointLight(0xff9a5a, 0, 14); warm.position.set(0, 1.2, -3.5); scene.add(warm);
 
   /* ---------- the tyre ---------- */
@@ -145,9 +144,9 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
 
   const SEG = 96;
   const rubberMat = (hex: number) =>
-    new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.82, metalness: 0, clearcoat: 0.12, clearcoatRoughness: 0.7, side: THREE.DoubleSide, emissive: 0xff7a2e, emissiveIntensity: 0 });
+    new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.8, metalness: 0, clearcoat: 0.14, clearcoatRoughness: 0.65, side: THREE.FrontSide, emissive: 0xff7a2e, emissiveIntensity: 0 });
   const mats = { base: rubberMat(0x2c2c30), cush: rubberMat(0x232326), tread: rubberMat(0x161618) };
-  const bandMat = new THREE.MeshPhysicalMaterial({ color: 0xcfd3d8, metalness: 1, roughness: 0.26, side: THREE.DoubleSide });
+  const bandMat = new THREE.MeshPhysicalMaterial({ color: 0xcfd3d8, metalness: 1, roughness: 0.24, side: THREE.FrontSide });
 
   const layer = (name: string) => { const g = new THREE.Group(); g.name = name; spin.add(g); return g; };
   const gBand = layer("band"), gBase = layer("base"), gCush = layer("cush"), gTread = layer("tread");
@@ -184,15 +183,15 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   [scanCore, scanGlow].forEach((m) => { m.rotation.x = Math.PI / 2; scanGroup.add(m); });
 
   const shadowTex = shadowTexture();
-  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0.3 }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = -2.35; scene.add(shadow);
 
   const glowTex = glowTexture();
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, opacity: 0 }));
   glow.renderOrder = -1; scene.add(glow);
 
-  /* ---------- state + cached bounds (zero layout reads in rAF / scroll) ---------- */
-  const cur = { explode: 1, rubber: 0.12, band: 0.12, dist: 10.5, yaw: -0.75, pitch: 0.28, focus: 0, heat: 0, idGlow: 0, scan: -1 };
+  /* ---------- state + cached bounds ---------- */
+  const cur = { explode: 1, rubber: 1.0, band: 1.0, dist: 9.6, yaw: -0.72, pitch: 0.24, focus: 0, heat: 0, idGlow: 0, scan: -1 };
   const tgt = { ...cur };
   let stage = -1, local = 0, raf = 0, running = false, last = performance.now(), spinA = 0;
   let mx = 0, my = 0, smx = 0, smy = 0;
@@ -203,7 +202,6 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   const tagFlip = new Map<string, boolean>();
   const tagOn = new Map<string, boolean>();
 
-  /* Reusable vectors/quats to avoid per-frame GC spikes */
   const v = new THREE.Vector3();
   const axis = new THREE.Vector3();
   const up = new THREE.Vector3();
@@ -218,7 +216,14 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   const fan: Record<string, number> = { tread: 0.15, cush: 0.55, base: 0.95, band: 1.35 };
 
   const setOpacity = (m: THREE.Material & { opacity: number }, o: number) => {
-    m.opacity = o; m.transparent = o < 0.995; m.depthWrite = o > 0.5; m.visible = o > 0.01;
+    const trans = o < 0.995;
+    if (m.transparent !== trans) {
+      m.transparent = trans;
+      m.needsUpdate = true;
+    }
+    m.opacity = o;
+    m.depthWrite = o > 0.5;
+    m.visible = o > 0.01;
   };
 
   function measureTagWidths() {
@@ -278,11 +283,11 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     camera.fov = camera.aspect < 0.8 ? 40 : camera.aspect < 1.2 ? 33 : 28;
     const w = Math.round(stageW), h = Math.round(stageH);
     if (camera.aspect >= 1.2) {
-      camera.setViewOffset(w, h, -Math.round(w * 0.1), -Math.round(h * 0.03), w, h);
+      camera.setViewOffset(w, h, -Math.round(w * 0.04), Math.round(h * 0.085), w, h);
     } else {
-      camera.setViewOffset(w, h, -Math.round(w * 0.03), 108, w, h);
-      const gap = Math.max(120, h - 372 - 120);
-      fit = Math.max(1, (0.36 * h) / (0.85 * gap));
+      camera.setViewOffset(w, h, 0, Math.round(h * 0.16), w, h);
+      const gap = Math.max(140, h - 320 - 96);
+      fit = Math.max(1.06, (0.34 * h) / (0.85 * gap));
     }
     camera.updateProjectionMatrix();
     measureTagWidths();
@@ -418,8 +423,8 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     gBand.getWorldPosition(tmpBandPos);
     root.position.set(-tmpBandPos.x * cur.focus, 0, -tmpBandPos.z * cur.focus);
 
-    const near = camera.aspect < 0.8 ? 1.3 * fit : camera.aspect < 1.2 ? 1.18 : 1;
-    camera.position.set(0, 0.35 + cur.pitch * 1.6, cur.dist * 1.55 * near);
+    const near = camera.aspect < 0.8 ? 1.28 * fit : camera.aspect < 1.2 ? 1.18 : 1;
+    camera.position.set(0, 0.35 + cur.pitch * 1.6, cur.dist * 1.7 * near);
     camera.lookAt(0, 0, 0);
 
     glow.quaternion.copy(camera.quaternion);
@@ -455,7 +460,7 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
 
   const introIO = new IntersectionObserver(
     (es, o) => es.forEach((en) => { if (en.isIntersecting) { sec.classList.add("in"); o.disconnect(); } }),
-    { threshold: 0.25 }
+    { threshold: 0.2 }
   );
   introIO.observe($(".h3-intro"));
 
@@ -468,7 +473,6 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
   window.addEventListener("pointermove", onPointer, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
 
-  // Trigger one resize pass after mounting height so downstream sections cache updated offsets
   scrollBus.refresh();
 
   return () => {
