@@ -22,7 +22,7 @@ const TEAM: {
   { name: "Adeepa Aryaprema", role: "Project delivery & engineering", photo: "/team/adeepa.webp", email: "adeepa.20240520@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/adeepa-aryaprema-16198231a/",
     github: "https://github.com/Adeepa-Aryaprema" },
-  { name: "Usmaan Imran", role: "Engineering, design & operations", email: "usmaan.20240530@iit.ac.lk",
+  { name: "Usmaan Imran", role: "Engineering, design & operations", photo: "/team/usmaan.webp", email: "usmaan.20240530@iit.ac.lk",
     linkedin: "https://www.linkedin.com/in/usmaanimran/",
     github: "https://github.com/usmaanimran" },
   { name: "Sadila Kaluhendiwala", role: "Growth & go-to-market", photo: "/team/sadila.webp", email: "sadila.20250214@iit.ac.lk",
