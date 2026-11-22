@@ -4,15 +4,18 @@
 
 import { scrollBus } from "@/lib/scrollBus";
 
-type Meta = { mod: string; st: string; hud: string; ro: string };
+/* g = ruler group: 0 Trace, 1 Check, 2 Explain. */
+type Meta = { mod: string; st: string; hud: string; ro: string; g: number };
 
 const META: Meta[] = [
-  { mod: "Trace", st: "Where", hud: "Trace / Passport", ro: '<small>Passport</small><b data-n="8">8</b> of 8 stages' },
-  { mod: "Trace", st: "Where", hud: "Trace / Containment", ro: '<small>Contained</small><b data-n="46">46</b> tyres, <em><b data-n="8">8</b> loaded for export</em>' },
-  { mod: "Check", st: "What's wrong", hud: "Check / Quality check", ro: '<small>Inspector</small>Suspect, <em>void at <b data-n="212">212</b>°</em>' },
-  { mod: "Check", st: "What's wrong", hud: "Check / Drift", ro: "<small>Drift alert</small>Build line B2, <em>trending heavy</em>" },
-  { mod: "Explain", st: "Why", hud: "Explain / Core cure", ro: '<small>Core cure estimate</small><em><b data-n="86">86</b>%</em>, below target' },
-  { mod: "Explain", st: "Why", hud: "Explain / Process clues", ro: "<small>Process clue</small>Press 3, <em>check cure</em>" },
+  { g: 0, mod: "Trace", st: "How many", hud: "Trace / Green tyre count", ro: '<small>Machine count</small><b data-n="104">104</b> builds, <em>log said 120</em>' },
+  { g: 0, mod: "Trace", st: "Where", hud: "Trace / Passport", ro: '<small>Passport</small><b data-n="8">8</b> of 8 stages' },
+  { g: 0, mod: "Trace", st: "Where", hud: "Trace / Containment", ro: '<small>Contained</small><b data-n="46">46</b> tyres, <em><b data-n="8">8</b> loaded for export</em>' },
+  { g: 1, mod: "Check", st: "What's wrong", hud: "Check / Quality check", ro: '<small>Inspector</small>Suspect, <em>void at <b data-n="212">212</b>°</em>' },
+  { g: 1, mod: "Check", st: "What's wrong", hud: "Check / Drift", ro: "<small>Drift alert</small>Build line B2, <em>trending heavy</em>" },
+  { g: 2, mod: "Explain", st: "Why", hud: "Explain / Core cure · solid", ro: '<small>Core cure estimate</small><em><b data-n="86">86</b>%</em>, below target' },
+  { g: 2, mod: "Explain", st: "Why", hud: "Explain / Process clues", ro: "<small>Process clue</small>Press 3, <em>check cure</em>" },
+  { g: 2, mod: "Explain", st: "Why", hud: "Explain / AI Root-Cause Detective", ro: "<small>Draft · engineer to approve</small>Batch <em>C-1182</em>" },
 ];
 
 export function initFeatures(sec: HTMLElement): () => void {
@@ -33,7 +36,8 @@ export function initFeatures(sec: HTMLElement): () => void {
   items.forEach((it, i) => {
     const a = document.createElement("article");
     const title = Array.from(it.querySelectorAll("h3 .ln > span")).map((s) => s.textContent).join(" ");
-    a.innerHTML = `<div class="m-meta">${META[i].mod} · ${META[i].st}</div><div class="m-screen"></div><h3>${title}</h3><p>${it.querySelector("p")?.textContent ?? ""}</p>`;
+    const tag = it.querySelector(".ft-tag")?.textContent;
+    a.innerHTML = `<div class="m-meta">${META[i].mod} · ${META[i].st}</div><div class="m-screen"></div>${tag ? `<span class="ft-tag">${tag}</span>` : ""}<h3>${title}</h3><p>${it.querySelector("p")?.textContent ?? ""}</p>`;
     const sc = tpl.content.querySelector(`.sc[data-s="${i}"]`)!.cloneNode(true);
     a.querySelector(".m-screen")!.appendChild(sc);
     mob.appendChild(a);
@@ -137,7 +141,7 @@ export function initFeatures(sec: HTMLElement): () => void {
     idx.textContent = String(i + 1).padStart(2, "0");
     mod.innerHTML = `<b>${m.mod}</b><i>${m.st}</i>`;
     hudL.textContent = m.hud;
-    hudR.textContent = `${String(i + 1).padStart(2, "0")} / 0${N}`;
+    hudR.textContent = `${String(i + 1).padStart(2, "0")} / ${String(N).padStart(2, "0")}`;
     ro.innerHTML = m.ro;
     countUp(ro);
 
@@ -158,7 +162,7 @@ export function initFeatures(sec: HTMLElement): () => void {
     });
 
     screen.classList.toggle("hot", i > 0);
-    gs.forEach((g, k) => g.classList.toggle("on", Math.floor(i / 2) === k));
+    gs.forEach((g, k) => g.classList.toggle("on", m.g === k));
   }
 
   function applyTrackHeight() {

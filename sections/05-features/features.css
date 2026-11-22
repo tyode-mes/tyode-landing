@@ -61,6 +61,11 @@
   transition:opacity .28s var(--ease),transform .4s var(--ease)}
 .ft-item.on ul{opacity:1;transform:translate3d(0,0,0);
   transition:opacity .85s var(--ease) .44s,transform .9s var(--ease) .44s}
+.ft-tag{display:inline-block;margin:0 0 14px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border:1.5px solid var(--sig);border-radius:999px;padding:.4em .9em}
+.ft-item .ft-tag{opacity:0;transition:opacity .3s var(--ease)}
+.ft-item.on .ft-tag{opacity:1;transition:opacity .8s var(--ease) .1s}
+.ft-mob .ft-tag{margin:20px 0 0}
+.ft-mob .ft-tag + h3{margin-top:12px}
 .ft-item li{font-size:12px;font-weight:500;color:var(--ink);border:1px solid var(--hair);border-radius:999px;padding:6px 11px;background:rgb(255 255 255 / .5)}
 
 /* the measuring rule */
@@ -81,6 +86,8 @@
 .ft-names li{position:absolute;left:calc(var(--i) * 100%);transform:translateX(calc(var(--i) * -100%));white-space:nowrap;
   opacity:clamp(.34,calc(1 - max(var(--p) - var(--i),var(--i) - var(--p)) * 4),1)}
 .ft-names button{all:unset;cursor:pointer}
+.ft-names{font-size:9.5px;letter-spacing:.08em}
+@media (max-width:1280px){.ft-names{font-size:8.5px;letter-spacing:.04em}}
 
 /* right: the instrument screen */
 .ft-screen{--mx:0;--my:0;position:relative;height:min(74vh,720px);border-radius:28px;background:var(--screen);color:var(--s-ink);overflow:hidden;
@@ -147,6 +154,9 @@
 .ft .sc .bar{transform-box:fill-box;transform-origin:bottom;transform:scaleY(0)}
 .ft .sc.on .bar{animation:ft-bar 1s var(--ease) forwards;animation-delay:var(--d,0s)}
 @keyframes ft-bar{to{transform:scaleY(1)}}
+.ft .sc .barx{transform-box:fill-box;transform-origin:left;transform:scaleX(0)}
+.ft .sc.on .barx{animation:ft-barx 1s var(--ease) forwards;animation-delay:var(--d,0s)}
+@keyframes ft-barx{to{transform:scaleX(1)}}
 .ft .sc .tile{fill:none;stroke:var(--s-hair);stroke-width:1.2}
 .ft .sc.on .tile.pick{animation:ft-pick .6s var(--ease) 1.2s forwards}
 @keyframes ft-pick{to{stroke:var(--sig);stroke-width:2;fill:rgb(255 77 46 / .1)}}
@@ -199,7 +209,8 @@
 @media (max-width:900px){.ft-intro{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){
   .ft *,.ft *::before,.ft *::after{animation:none!important;transition:none!important}
-  .ft .sc .draw{stroke-dashoffset:0}.ft .sc .pop{opacity:1;transform:none}.ft .sc .bar{transform:none}
+  .ft .sc .draw{stroke-dashoffset:0}.ft .sc .pop{opacity:1;transform:none}.ft .sc .bar,.ft .sc .barx{transform:none}
+  .ft .ft-item.on .ft-tag{opacity:1}
   .ft .sc .dot.hit{fill:var(--s-ink)}.ft .sc .dot.ship{fill:var(--sig)}
   .ft .sc .node{fill:var(--s-ink);stroke:var(--s-ink)}
   .ft .sc .tile.pick{stroke:var(--sig);stroke-width:2;fill:rgb(255 77 46 / .1)}
