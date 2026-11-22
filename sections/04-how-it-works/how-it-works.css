@@ -122,6 +122,33 @@
 @keyframes h3-roll{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 .h3 .h3-note{position:absolute;z-index:3;left:50%;bottom:clamp(14px,2.4vh,24px);transform:translateX(-50%);margin:0;font-size:11px;font-weight:500;color:var(--ink-3);white-space:nowrap}
 
+/* today vs with Tyode, under the closing line: a two-column table; each row becomes a small card on phones */
+.h3 .h3-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.h3 .h3-cmp{margin:clamp(56px,9vh,96px) auto 0;text-align:left}
+.h3 .h3-cmp h3{margin:0 0 clamp(20px,3vh,32px);font-size:clamp(1.6rem,2.6vw,2.4rem);font-weight:600;letter-spacing:-.045em;line-height:1.05;text-align:center}
+.h3 .h3-cmp-card{border-radius:26px;background:rgb(255 255 255 / .62);border:1px solid rgb(255 255 255 / .85);box-shadow:0 30px 60px -46px rgb(0 0 0 / .4);
+  padding:clamp(8px,1vw,14px) clamp(22px,2.4vw,36px)}
+.h3 .h3-cmp table{width:100%;border-collapse:collapse;table-layout:fixed;text-align:left}
+.h3 .h3-cmp th{padding:18px 0 14px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.h3 .h3-cmp th + th{color:var(--ink)}
+.h3 .h3-cmp td{padding:18px 0;border-top:1px solid var(--hair);font-size:clamp(15px,1.2vw,17px);line-height:1.45;vertical-align:top}
+.h3 .h3-cmp td:first-child{padding-right:clamp(20px,3vw,48px);color:var(--ink-2)}
+.h3 .h3-cmp td + td{position:relative;padding-left:22px;color:var(--ink);font-weight:500}
+.h3 .h3-cmp td + td::before{content:"";position:absolute;left:0;top:calc(18px + .75em);width:7px;height:7px;border-radius:50%;background:#ff4d2e;transform:translateY(-50%)}
+.h3 .h3-cmp + .h3-next{margin-top:clamp(40px,6vh,64px)}
+@media (max-width:620px){
+  .h3 .h3-cmp-card{padding:6px 20px}
+  .h3 .h3-cmp thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .h3 .h3-cmp table,.h3 .h3-cmp tbody,.h3 .h3-cmp tr,.h3 .h3-cmp td{display:block}
+  .h3 .h3-cmp tbody tr{padding:18px 0;border-top:1px solid var(--hair)}
+  .h3 .h3-cmp tbody tr:first-child{border-top:0}
+  .h3 .h3-cmp td{padding:0;border:0}
+  .h3 .h3-cmp td:first-child{padding-right:0}
+  .h3 .h3-cmp td + td{margin-top:10px;padding-left:0}
+  .h3 .h3-cmp td[data-label]::before,.h3 .h3-cmp td + td[data-label]::before{content:attr(data-label);position:static;display:block;width:auto;height:auto;margin-bottom:4px;border-radius:0;background:none;transform:none;
+    font-size:11.5px;font-weight:600;color:var(--ink-2)}
+}
+
 /* fallback when WebGL is unavailable */
 .h3.no3d .h3-scroll{height:auto!important}
 .h3.no3d .h3-stage{position:relative;height:auto;padding:0 clamp(20px,4vw,64px) 40px;background:none}
