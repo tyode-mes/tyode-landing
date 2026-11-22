@@ -302,10 +302,13 @@ void main() {
       float aa = 0.75;
       float band = smoothstep(uBand.x - aa, uBand.x + aa, y) * (1.0 - smoothstep(uBand.y - aa, uBand.y + aa, y));
       col = mix(col, vec3(1.0), band * (1.0 - cov) * uBand.w);
-      float bc = 0.5 * (uBand.x + uBand.y);
-      vec2 lu = vec2((gl_FragCoord.x - uLabelBox.x) / (uLabelBox.y - uLabelBox.x), (y - (bc - 0.5 * uLabelBox.z)) / uLabelBox.z);
-      if (lu.x > 0.0 && lu.x < 1.0 && lu.y > 0.0 && lu.y < 1.0) {
-        col = mix(col, uInk, texture(uLabel, lu).a * band * (1.0 - cov) * uBand.w);
+      if (uLabelBox.y > uLabelBox.x && uLabelBox.z > 0.0) {
+        float bc = 0.5 * (uBand.x + uBand.y);
+        float ly0 = bc - 0.5 * uLabelBox.z;
+        vec2 lu = vec2((gl_FragCoord.x - uLabelBox.x) / (uLabelBox.y - uLabelBox.x), (y - ly0) / uLabelBox.z);
+        if (lu.x > 0.0 && lu.x < 1.0 && lu.y > 0.0 && lu.y < 1.0) {
+          col = mix(col, uInk, textureLod(uLabel, lu, 0.0).a * band * (1.0 - cov) * uBand.w);
+        }
       }
     }
   }
@@ -704,14 +707,14 @@ export default function HeroVideo({
       deviceMemory?: number;
       connection?: { saveData?: boolean; effectiveType?: string };
     };
-    const smallScreen = Math.min(window.innerWidth, window.innerHeight) < 700 || window.innerWidth < 900;
+    const smallScreen = window.innerWidth < 900;
     const weakDevice = (nav.deviceMemory ?? 8) <= 4 || (nav.hardwareConcurrency ?? 8) <= 4;
     const slowNet = !!nav.connection?.saveData || /(^|-)(2g|3g)$/.test(nav.connection?.effectiveType ?? "");
     const lite = !!sd && (smallScreen || weakDevice || slowNet);
     const clips = lite && sd ? sd : hd;
     const GRID_X = lite ? 180 : 260;
     const GRID_Y = lite ? 102 : 146;
-    const MAX_DPR = lite ? 1.0 : 1.5;
+    const MAX_DPR = lite ? 1.0 : 2.0;
 
     const gl = canvas.getContext("webgl2", {
       antialias: false,
@@ -736,26 +739,30 @@ export default function HeroVideo({
     }
 
     /* ---------- Band label texture ---------- */
-    const LABEL_PX = 56;
     const labelTex = gl.createTexture();
     let labelW = 0;
     let labelH = 0;
+    let labelDpr = 0;
+    let curDpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    let fontsLoaded = false;
     const abort = new AbortController();
-    const drawTitle = () => {
+    const drawTitle = (dpr: number) => {
       if (abort.signal.aborted) return;
+      const AA = 2;
+      const px = BAND.labelSize * dpr * AA;
       const family = getComputedStyle(stage).fontFamily || "sans-serif";
       const lc = document.createElement("canvas");
       const l = lc.getContext("2d")!;
       const setLabel = () => {
-        l.font = `500 ${LABEL_PX}px ${family}`;
-        (l as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${LABEL_PX * 0.14}px`;
+        l.font = `500 ${px}px ${family}`;
+        (l as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${px * 0.14}px`;
       };
       setLabel();
       const lt = BAND.label.toUpperCase();
       const lm = l.measureText(lt);
-      const lpad = Math.ceil(LABEL_PX * 0.2);
+      const lpad = Math.ceil(px * 0.25);
       lc.width = Math.ceil(lm.width) + lpad * 2;
-      lc.height = Math.ceil(LABEL_PX * 1.4);
+      lc.height = Math.ceil(px * 1.6);
       setLabel();
       l.fillStyle = "#fff";
       l.textBaseline = "middle";
@@ -764,15 +771,19 @@ export default function HeroVideo({
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, lc);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      labelW = lc.width;
-      labelH = lc.height;
+      labelW = lc.width / AA;
+      labelH = lc.height / AA;
+      labelDpr = dpr;
     };
-    document.fonts.ready.then(drawTitle, drawTitle);
+    const onFonts = () => {
+      fontsLoaded = true;
+      drawTitle(curDpr);
+    };
+    document.fonts.ready.then(onFonts, onFonts);
 
     /* ---------- Geometry ---------- */
     const quadVao = gl.createVertexArray();
@@ -880,6 +891,8 @@ export default function HeroVideo({
       secH = section.offsetHeight;
       vh = window.innerHeight;
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      curDpr = dpr;
+      if (fontsLoaded && Math.abs(dpr - labelDpr) > 0.01) drawTitle(dpr);
       const w = Math.max(1, Math.round(cssW * dpr));
       const h = Math.max(1, Math.round(cssH * dpr));
       if (w !== outW || h !== outH) {
@@ -1235,7 +1248,7 @@ export default function HeroVideo({
         }
         settleOffset += (settleTarget - settleOffset) * (1 - Math.exp(-dt * 3.5));
 
-        // Phase-continuous gentle idle sway at top/bottom (starts at exact current frame — zero snap!)
+        // Phase-continuous gentle idle sway at top/bottom (starts at exact current frame - zero snap!)
         let idleDelta = 0;
         if (useStream && trulyIdle && !midway && !calm) {
           const side = eTarget < 0.5 ? -1 : 1;
@@ -1566,10 +1579,12 @@ export default function HeroVideo({
         const yBot = base - fsz * BAND.bottom;
         gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -roll * 0.9, BAND.opacity * tA);
         gl.uniform1f(postProg.u("uBandX"), cssW * 0.5 * kk);
-        const ls = BAND.labelSize / LABEL_PX;
-        const lx0 = cssW * BAND.labelX;
-        const lFits = lx0 + labelW * ls < cssW - 12;
-        gl.uniform3f(postProg.u("uLabelBox"), lx0 * kk, (lx0 + (lFits ? labelW * ls : 0)) * kk, labelH * ls * kk);
+
+        // Replace the old Math.round lines here:
+        const lx0 = cssW * BAND.labelX * kk;
+        const lFits = labelW > 0 && lx0 + labelW < outW - 12 * kk;
+        gl.uniform3f(postProg.u("uLabelBox"), lx0, lx0 + (lFits ? labelW : 0), labelH);
+
         gl.activeTexture(gl.TEXTURE4);
         gl.bindTexture(gl.TEXTURE_2D, labelTex);
         gl.uniform1i(postProg.u("uLabel"), 4);
