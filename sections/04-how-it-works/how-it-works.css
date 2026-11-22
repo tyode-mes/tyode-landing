@@ -1,6 +1,7 @@
-/* Section 04: how it works. Apple-style product story around a live 3D tyre.
-   Pure GPU-composited stage transitions (zero scroll-time letter-spacing reflow or blur repaint). */
+/* Section 04: how it works. Unified monochrome layout around a live 3D tyre. */
 .h3{
+  --gut:clamp(20px,4vw,56px);
+  --edge:max(var(--gut),calc((100% - 1360px) / 2 + var(--gut)));
   --ink:#0c0c0d; --ink-2:rgb(12 12 13 / .62); --ink-3:rgb(12 12 13 / .38); --hair:rgb(12 12 13 / .12);
   --ease:cubic-bezier(.16,1,.3,1); --p:0;
   position:relative; color:var(--ink); background:#ececed;
@@ -9,55 +10,86 @@
 .h3 *{box-sizing:border-box}
 .h3 :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
-/* intro: centred, Apple-style */
-.h3 .h3-intro{max-width:980px;margin:0 auto;padding:clamp(110px,16vh,180px) 24px clamp(40px,7vh,80px);text-align:center}
-.h3 .h3-eyebrow{display:inline-block;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
-.h3 .h3-intro h2{margin:14px 0 0;font-size:clamp(3rem,8.4vw,8rem);font-weight:600;letter-spacing:-.055em;line-height:.95}
-.h3 .ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
-.h3 .ln > span{display:block;transform:translate3d(0,105%,0);transition:transform 1.2s var(--ease)}
-.h3 .h3-intro .ln + .ln > span{transition-delay:.12s;
-  background:linear-gradient(180deg,#5b5b60,#9a9aa0);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* intro: compact 2-column architectural header locked to the 1360px grid */
+.h3 .h3-intro{
+  max-width:1360px;margin:0 auto;
+  padding:clamp(88px,10vh,124px) var(--gut) clamp(8px,1.5vh,20px);
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  column-gap:clamp(32px,5vw,84px);row-gap:12px;
+  align-items:start;text-align:left;
+}
+.h3 .h3-eyebrow{
+  grid-column:1;grid-row:1;
+  display:inline-block;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+}
+.h3 .h3-intro h2{
+  grid-column:1;grid-row:2 / span 2;
+  margin:0;font-size:clamp(2.5rem,5.2vw,4.9rem);font-weight:600;letter-spacing:-.05em;line-height:.98;
+}
+.h3 .ln{display:block;overflow:hidden;padding-bottom:.1em;margin-bottom:-.1em}
+.h3 .ln > span{display:block;transform:translate3d(0,105%,0);transition:transform 1.1s var(--ease)}
+.h3 .h3-intro .ln + .ln > span{transition-delay:.1s;color:#8a8a90}
 .h3.in .h3-intro .ln > span{transform:translate3d(0,0,0)}
-.h3 .h3-intro p{margin:26px auto 0;max-width:44ch;font-size:clamp(17px,1.5vw,21px);line-height:1.45;color:var(--ink-2);
-  opacity:0;transform:translate3d(0,12px,0);transition:opacity 1s var(--ease) .4s,transform 1s var(--ease) .4s}
+.h3 .h3-intro p{
+  grid-column:2;grid-row:2;
+  margin:2px 0 0;max-width:48ch;font-size:clamp(15px,1.15vw,17px);line-height:1.55;color:var(--ink-2);
+  opacity:0;transform:translate3d(0,10px,0);transition:opacity .9s var(--ease) .25s,transform .9s var(--ease) .25s;
+}
 .h3.in .h3-intro p{opacity:1;transform:translate3d(0,0,0)}
-/* "On a pneumatic line" note under the intro */
-.h3 .h3-alt{max-width:560px;margin:30px auto 0;padding:18px 22px;border-radius:20px;text-align:left;
-  background:rgb(255 255 255 / .62);border:1px solid rgb(255 255 255 / .85);box-shadow:0 24px 50px -40px rgb(0 0 0 / .4);
-  font-size:15px;line-height:1.5;color:var(--ink-2);
-  opacity:0;transform:translate3d(0,12px,0);transition:opacity 1s var(--ease) .55s,transform 1s var(--ease) .55s}
+
+/* "On a pneumatic line": crisp inline hairline footnote under the right column */
+.h3 .h3-alt{
+  grid-column:2;grid-row:3;
+  margin:6px 0 0;padding:14px 0 0;border-top:1px solid var(--hair);
+  max-width:48ch;text-align:left;font-size:13px;line-height:1.55;color:var(--ink-2);
+  opacity:0;transform:translate3d(0,10px,0);transition:opacity .9s var(--ease) .38s,transform .9s var(--ease) .38s;
+}
 .h3.in .h3-alt{opacity:1;transform:translate3d(0,0,0)}
-.h3 .h3-alt b{display:block;margin-bottom:4px;font-size:15px;font-weight:600;color:var(--ink)}
+.h3 .h3-alt b{
+  display:block;margin-bottom:4px;
+  font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);
+}
 .h3 .h3-alt span{display:block}
-.h3 .h3-alt a{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.h3 .h3-alt a{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none;
+  padding-bottom:2px;border-bottom:1.5px solid var(--ink);transition:opacity .2s ease;
+}
+.h3 .h3-alt a:hover{opacity:.6}
 .h3 .h3-alt a i{font-style:normal;transition:transform .4s var(--ease)}
 .h3 .h3-alt a:hover i{transform:translateX(3px)}
 
-/* pinned 3D stage */
+/* pinned 3D stage: continuous ground, zero seam */
 .h3 .h3-scroll{position:relative}
-.h3 .h3-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;contain:layout style paint;
-  background:radial-gradient(70% 60% at 50% 42%,#fbfbfc 0%,#f0f0f2 45%,#dedee1 100%)}
-.h3 .h3-stage::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(120% 90% at 50% 45%,transparent 60%,rgb(0 0 0 / .08) 100%)}
-.h3 .h3-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.h3 .h3-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;contain:layout style paint;background:transparent}
+.h3 .h3-stage::before{
+  content:"";position:absolute;left:50%;top:43%;z-index:0;
+  width:min(940px,90vw);height:min(640px,72vh);
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgb(255 255 255 / .78) 0%,rgb(255 255 255 / .24) 55%,rgb(255 255 255 / 0) 100%);
+}
+.h3 .h3-canvas{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block}
 
-/* segmented progress, top centre */
-.h3 .h3-seg{position:absolute;z-index:3;left:50%;top:calc(104px + 2vh);transform:translateX(-50%);display:flex;gap:8px;margin:0;padding:0;list-style:none}
-.h3 .h3-seg button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:9px}
-.h3 .h3-seg i{position:relative;display:block;width:clamp(28px,4.6vw,64px);height:3px;border-radius:3px;background:rgb(12 12 13 / .12);overflow:hidden}
+/* segmented progress rail: full-width clean hairline matching Features */
+.h3 .h3-seg{
+  position:absolute;z-index:3;left:var(--edge);right:var(--edge);top:clamp(78px,8.5vh,96px);
+  display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin:0;padding:0;list-style:none;
+}
+.h3 .h3-seg button{all:unset;cursor:pointer;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:4px 0}
+.h3 .h3-seg i{position:relative;display:block;width:100%;height:1.5px;background:rgb(12 12 13 / .14);overflow:hidden}
 .h3 .h3-seg i::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(var(--f));transform-origin:left;will-change:transform}
-.h3 .h3-seg span{font-size:10.5px;font-weight:500;letter-spacing:.02em;color:var(--ink-3);transition:color .4s}
-.h3 .h3-seg li.on span{color:var(--ink)}
+.h3 .h3-seg span{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);transition:color .3s}
+.h3 .h3-seg li.on span,.h3 .h3-seg button:hover span{color:var(--ink)}
 
-/* floating labels anchored to the 3D model (crisp translucent surface, no expensive per-frame backdrop-filter) */
+/* floating labels anchored to the 3D model */
 .h3 .h3-tags{position:absolute;inset:0;z-index:2;pointer-events:none}
 .h3 .h3-tag{position:absolute;left:0;top:0;display:flex;align-items:center;opacity:0;transition:opacity .45s var(--ease);will-change:transform}
 .h3 .h3-tag.on{opacity:1}
 .h3 .h3-tag i{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 4px rgb(255 255 255 / .8)}
 .h3 .h3-tag span{width:44px;height:1px;background:var(--ink-3);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease) .08s}
 .h3 .h3-tag.on span{transform:scaleX(1)}
-.h3 .h3-tag div{padding:7px 12px;border-radius:12px;background:rgb(255 255 255 / .88);
-  border:1px solid rgb(255 255 255 / .95);box-shadow:0 8px 22px -12px rgb(0 0 0 / .22);white-space:nowrap;
+.h3 .h3-tag div{padding:7px 12px;border-radius:10px;background:rgb(255 255 255 / .92);
+  border:1px solid rgb(12 12 13 / .08);box-shadow:0 8px 22px -12px rgb(0 0 0 / .22);white-space:nowrap;
   transform:translate3d(-6px,0,0);transition:transform .55s var(--ease) .12s}
 .h3 .h3-tag.on div{transform:translate3d(0,0,0)}
 .h3 .h3-tag.flip{flex-direction:row-reverse}
@@ -68,18 +100,18 @@
 .h3 .h3-tag b{display:block;font-size:12.5px;font-weight:600;letter-spacing:-.01em}
 .h3 .h3-tag em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-2);margin-top:1px;font-variant-numeric:tabular-nums}
 
-/* stage copy, bottom left: pure GPU opacity + transform choreography */
-.h3 .h3-copy{position:absolute;z-index:3;left:clamp(20px,4vw,64px);bottom:clamp(28px,6vh,64px);width:min(440px,40vw);height:clamp(250px,34vh,300px)}
+/* stage copy, bottom left locked to 1360px grid */
+.h3 .h3-copy{position:absolute;z-index:3;left:var(--edge);bottom:clamp(28px,5.2vh,56px);width:min(420px,38vw);height:clamp(240px,32vh,290px)}
 .h3 .h3-item{position:absolute;left:0;right:0;bottom:0;pointer-events:none}
 .h3 .h3-item.on{pointer-events:auto}
 
-.h3 .h3-st{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:12px;
+.h3 .h3-st{display:block;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;
   opacity:0;transform:translate3d(0,10px,0);
   transition:opacity .35s var(--ease),transform .5s var(--ease)}
 .h3 .h3-item.on .h3-st{opacity:1;transform:translate3d(0,0,0);
   transition:opacity .7s var(--ease) .08s,transform .85s var(--ease) .08s}
 
-.h3 .h3-item h3{margin:0;font-size:clamp(2rem,3.6vw,3.5rem);font-weight:600;letter-spacing:-.045em;line-height:1}
+.h3 .h3-item h3{margin:0;font-size:clamp(1.9rem,3.3vw,3.2rem);font-weight:600;letter-spacing:-.045em;line-height:1}
 .h3 .h3-item h3 .ln{overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
 .h3 .h3-item h3 .ln > span{
   opacity:0;transform:translate3d(0,22px,0) scale(1.02);transform-origin:left bottom;
@@ -88,28 +120,28 @@
   opacity:1;transform:translate3d(0,0,0) scale(1);
   transition:opacity .85s var(--ease) .16s,transform 1.1s var(--ease) .16s}
 .h3 .h3-item.on h3 .ln + .ln > span{transition-delay:.28s}
-.h3 .h3-item h3 .ln + .ln > span{color:#77777d}
+.h3 .h3-item h3 .ln + .ln > span{color:#8a8a90}
 
-.h3 .h3-item p{margin:16px 0 0;font-size:15.5px;line-height:1.5;color:var(--ink-2);max-width:40ch;
+.h3 .h3-item p{margin:14px 0 0;font-size:15px;line-height:1.5;color:var(--ink-2);max-width:40ch;
   opacity:0;transform:translate3d(0,12px,0);
   transition:opacity .35s var(--ease),transform .5s var(--ease)}
 .h3 .h3-item.on p{opacity:1;transform:translate3d(0,0,0);
   transition:opacity .85s var(--ease) .38s,transform 1s var(--ease) .38s}
-.h3 .h3-item dl{margin:16px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;
+.h3 .h3-item dl{margin:14px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;
   opacity:0;transform:translate3d(0,8px,0);transition:opacity .35s var(--ease),transform .5s var(--ease)}
 .h3 .h3-item.on dl{opacity:1;transform:translate3d(0,0,0);transition:opacity .85s var(--ease) .5s,transform .9s var(--ease) .5s}
-.h3 .h3-item dt{font-size:11px;font-weight:600;color:var(--ink-3)}
+.h3 .h3-item dt{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .h3 .h3-item dd{margin:0;font-size:13px}
 
-/* passport: clean frosted card, bottom right */
-.h3 .h3-pass{position:absolute;z-index:3;right:clamp(20px,4vw,64px);bottom:clamp(28px,6vh,64px);width:clamp(250px,22vw,300px);
-  padding:16px 18px 8px;border-radius:22px;background:rgb(255 255 255 / .76);
-  backdrop-filter:blur(12px) saturate(1.3);-webkit-backdrop-filter:blur(12px) saturate(1.3);
-  border:1px solid rgb(255 255 255 / .85);box-shadow:0 30px 60px -36px rgb(0 0 0 / .3);contain:layout style}
+/* passport card, bottom right locked to 1360px grid */
+.h3 .h3-pass{position:absolute;z-index:3;right:var(--edge);bottom:clamp(28px,5.2vh,56px);width:clamp(250px,21vw,296px);
+  padding:15px 18px 8px;border-radius:14px;background:rgb(255 255 255 / .82);
+  backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);
+  border:1px solid rgb(12 12 13 / .08);box-shadow:0 24px 50px -32px rgb(0 0 0 / .24);contain:layout style}
 .h3 .h3-pass-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid var(--hair)}
-.h3 .h3-pass-head small{display:block;font-size:11px;font-weight:600;color:var(--ink-3)}
+.h3 .h3-pass-head small{display:block;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .h3 .h3-pass-head b{display:block;margin-top:3px;font-size:14px;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums}
-.h3 .h3-count{font-size:11.5px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.h3 .h3-count{font-size:11px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .h3 .h3-pass ol{list-style:none;margin:0;padding:0}
 .h3 .h3-pass li{position:relative;display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--hair);font-size:12px}
 .h3 .h3-pass li:last-child{border-bottom:0}
@@ -117,16 +149,16 @@
 .h3 .h3-pass li em{font-style:normal;font-weight:500;color:var(--ink-3);font-variant-numeric:tabular-nums;text-align:right;transition:color .4s}
 .h3 .h3-pass li.on span{color:var(--ink-2)}
 .h3 .h3-pass li.on em{color:var(--ink)}
-.h3 .h3-pass li.now::before{content:"";position:absolute;left:-18px;top:50%;width:3px;height:14px;margin-top:-7px;border-radius:0 2px 2px 0;background:var(--ink)}
+.h3 .h3-pass li.now::before{content:"";position:absolute;left:-18px;top:50%;width:2.5px;height:14px;margin-top:-7px;background:var(--ink)}
 .h3 .h3-pass li.now em{animation:h3-roll .6s var(--ease) both}
 @keyframes h3-roll{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
-.h3 .h3-note{position:absolute;z-index:3;left:50%;bottom:clamp(14px,2.4vh,24px);transform:translateX(-50%);margin:0;font-size:11px;font-weight:500;color:var(--ink-3);white-space:nowrap}
+.h3 .h3-note{position:absolute;z-index:3;left:50%;bottom:clamp(14px,2.2vh,22px);transform:translateX(-50%);margin:0;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
 
-/* today vs with Tyode, under the closing line: a two-column table; each row becomes a small card on phones */
+/* today vs with Tyode */
 .h3 .h3-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .h3 .h3-cmp{margin:clamp(56px,9vh,96px) auto 0;text-align:left}
 .h3 .h3-cmp h3{margin:0 0 clamp(20px,3vh,32px);font-size:clamp(1.6rem,2.6vw,2.4rem);font-weight:600;letter-spacing:-.045em;line-height:1.05;text-align:center}
-.h3 .h3-cmp-card{border-radius:26px;background:rgb(255 255 255 / .62);border:1px solid rgb(255 255 255 / .85);box-shadow:0 30px 60px -46px rgb(0 0 0 / .4);
+.h3 .h3-cmp-card{border-radius:18px;background:rgb(255 255 255 / .72);border:1px solid rgb(12 12 13 / .08);box-shadow:0 26px 54px -42px rgb(0 0 0 / .32);
   padding:clamp(8px,1vw,14px) clamp(22px,2.4vw,36px)}
 .h3 .h3-cmp table{width:100%;border-collapse:collapse;table-layout:fixed;text-align:left}
 .h3 .h3-cmp th{padding:18px 0 14px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
@@ -136,6 +168,32 @@
 .h3 .h3-cmp td + td{position:relative;padding-left:22px;color:var(--ink);font-weight:500}
 .h3 .h3-cmp td + td::before{content:"";position:absolute;left:0;top:calc(18px + .75em);width:7px;height:7px;border-radius:50%;background:#ff4d2e;transform:translateY(-50%)}
 .h3 .h3-cmp + .h3-next{margin-top:clamp(40px,6vh,64px)}
+
+@media (max-width:900px){
+  .h3 .h3-intro{grid-template-columns:1fr;row-gap:14px;padding:clamp(84px,11vh,112px) var(--gut) 12px}
+  .h3 .h3-eyebrow,.h3 .h3-intro h2,.h3 .h3-intro p,.h3 .h3-alt{grid-column:1;grid-row:auto;max-width:56ch}
+  .h3 .h3-stage::before{top:35%;width:92vw;height:48vh}
+  .h3 .h3-seg{top:88px;gap:5px}
+  .h3 .h3-seg span{display:none}
+  .h3 .h3-copy{left:var(--edge);right:var(--edge);width:auto;height:200px;bottom:104px}
+  .h3 .h3-st{font-size:10px;margin-bottom:6px}
+  .h3 .h3-item h3{font-size:clamp(1.6rem,6.6vw,2.25rem);line-height:1.02}
+  .h3 .h3-item p{margin-top:8px;font-size:13.5px;line-height:1.45;max-width:100%}
+  .h3 .h3-item dl{display:none}
+  .h3 .h3-pass{left:var(--edge);right:var(--edge);width:auto;bottom:16px;padding:10px 14px;border-radius:12px}
+  .h3 .h3-pass-head{align-items:center;border-bottom:0;padding:0}
+  .h3 .h3-pass-head > div{display:flex;align-items:baseline;gap:8px}
+  .h3 .h3-pass-head b{margin-top:0;font-size:13px}
+  .h3 .h3-pass ol{display:block;margin-top:7px;padding-top:7px;border-top:1px solid var(--hair)}
+  .h3 .h3-pass li{display:none;padding:0;border:0;font-size:11.5px}
+  .h3 .h3-pass li.now{display:flex}
+  .h3 .h3-pass li.now::before{display:none}
+  .h3 .h3-tag div{padding:4px 8px;border-radius:8px;white-space:normal;max-width:min(165px,44vw)}
+  .h3 .h3-tag b{font-size:11px}
+  .h3 .h3-tag em{display:none}
+  .h3 .h3-tag span{width:14px}
+  .h3 .h3-note{display:none}
+}
 @media (max-width:620px){
   .h3 .h3-cmp-card{padding:6px 20px}
   .h3 .h3-cmp thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -148,10 +206,12 @@
   .h3 .h3-cmp td[data-label]::before,.h3 .h3-cmp td + td[data-label]::before{content:attr(data-label);position:static;display:block;width:auto;height:auto;margin-bottom:4px;border-radius:0;background:none;transform:none;
     font-size:11.5px;font-weight:600;color:var(--ink-2)}
 }
+@media (max-width:900px) and (max-height:620px){.h3 .h3-tag{display:none}}
 
 /* fallback when WebGL is unavailable */
 .h3.no3d .h3-scroll{height:auto!important}
-.h3.no3d .h3-stage{position:relative;height:auto;padding:0 clamp(20px,4vw,64px) 40px;background:none}
+.h3.no3d .h3-stage{position:relative;height:auto;padding:24px var(--gut) 40px;background:none}
+.h3.no3d .h3-stage::before{display:none}
 .h3.no3d .h3-canvas,.h3.no3d .h3-tags,.h3.no3d .h3-seg,.h3.no3d .h3-note,.h3.no3d .h3-pass{display:none}
 .h3.no3d .h3-copy{position:static;width:auto;height:auto;display:grid;gap:40px;max-width:720px}
 .h3.no3d .h3-item{position:static}
@@ -161,28 +221,11 @@
 /* closing */
 .h3 .h3-close{max-width:980px;margin:0 auto;padding:clamp(90px,14vh,160px) 24px clamp(100px,16vh,180px);text-align:center}
 .h3 .h3-close h2{margin:0;font-size:clamp(2.4rem,5.6vw,5.4rem);font-weight:600;letter-spacing:-.05em;line-height:1}
-.h3 .h3-close h2 span{color:#77777c} /* 3.8:1 on the page grey, passes WCAG AA for large text */
+.h3 .h3-close h2 span{color:#77777c}
 .h3 .h3-next{display:inline-flex;align-items:center;gap:12px;margin-top:34px;text-decoration:none;color:#fff;background:var(--ink);border-radius:999px;padding:8px 8px 8px 22px;font-weight:500;font-size:16px}
 .h3 .h3-next i{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#fff;color:var(--ink);font-style:normal;transition:transform .4s var(--ease)}
 .h3 .h3-next:hover i{transform:translateY(3px)}
 
-@media (max-width:900px){
-  .h3 .h3-seg span{display:none}
-  .h3 .h3-copy{width:auto;right:clamp(20px,4vw,64px);height:240px;bottom:132px}
-  .h3 .h3-item p{font-size:14.5px}
-  .h3 .h3-item dl{display:none}
-  .h3 .h3-pass{left:clamp(20px,4vw,64px);right:clamp(20px,4vw,64px);width:auto;bottom:40px;padding:10px 16px}
-  .h3 .h3-pass ol{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
-  .h3 .h3-pass li{display:none;padding:0;border:0}
-  .h3 .h3-pass li.now{display:flex}
-  .h3 .h3-pass li.now::before{display:none}
-  .h3 .h3-pass-head{border-bottom:0;padding:0}
-  .h3 .h3-tag div{padding:5px 9px;white-space:normal;max-width:min(190px,48vw)}
-  .h3 .h3-tag b{font-size:11px}.h3 .h3-tag em{display:none}
-  .h3 .h3-tag span{width:22px}
-  .h3 .h3-note{display:none}
-}
-@media (max-width:900px) and (max-height:620px){.h3 .h3-tag{display:none}}
 @media (prefers-reduced-motion:reduce){
   .h3 *,.h3 *::before,.h3 *::after{animation:none!important;transition:none!important}
   .h3 .h3-intro .ln > span{transform:none}.h3 .h3-intro p,.h3 .h3-alt{opacity:1;transform:none}
