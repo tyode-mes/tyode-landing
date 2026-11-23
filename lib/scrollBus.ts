@@ -118,13 +118,32 @@ function createScrollBus() {
     return false;
   };
 
+  /* stop any glide in progress and take the page's real position as ours */
+  const haltGlide = () => {
+    if (raf) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    }
+    animActive = false;
+    state.y = chaseY = state.targetY = window.scrollY;
+    state.velocity = 0;
+  };
+
   const onWheel = (e: WheelEvent) => {
     if (e.ctrlKey) return; // keep browser pinch-to-zoom
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5 && Math.abs(e.deltaY) < 4) return;
-    if (isInnerScrollable(e.target as HTMLElement | null, e.deltaY)) return;
+    if (isInnerScrollable(e.target as HTMLElement | null, e.deltaY)) {
+      // Something else is handling this wheel (an inner panel, or the hero's own pinned scrolling).
+      // Stop our glide on the spot so the two never pull the page in different directions.
+      haltGlide();
+      return;
+    }
 
     e.preventDefault();
     animActive = false;
+    // Starting fresh (nothing gliding): begin from where the page really is. Something else (the hero's own
+    // scrolling, the scrollbar, the keyboard) may have moved it since we last looked.
+    if (!raf) state.y = chaseY = state.targetY = window.scrollY;
 
     // Keep maxScroll fresh if dynamic content grew
     const liveMax = Math.max(0, document.documentElement.scrollHeight - state.vh);
@@ -383,4 +402,4 @@ function createScrollBus() {
   };
 }
 
-export const scrollBus = createScrollBus();
+export const scrollBus = createScrollBus();
