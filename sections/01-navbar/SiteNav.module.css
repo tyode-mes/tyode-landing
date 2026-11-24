@@ -159,11 +159,12 @@
    the links, the sliding hover pill takes over so the two never stack. */
 .link[aria-current] {
   color: #fff;
-  border-radius: 999px;
   background: rgb(255 255 255 / 0.1);
 }
 
+/* rounded at all times, so the highlight fades out as a pill when it moves on (not a square) */
 .link {
+  border-radius: 999px;
   transition: color 0.25s ease, background 0.35s ease;
 }
 
