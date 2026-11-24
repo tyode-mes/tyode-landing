@@ -54,7 +54,7 @@ const SHARPNESS = [0.89, 0.90, 0.90, 0.90, 0.89, 0.89, 1.00, 1.00, 1.00, 1.00, 0
 const SHARP_ENOUGH = 0.9;
 
 /** How much further one mouse-wheel notch moves the hero than normal scrolling would. */
-const WHEEL_BOOST = 2;
+const WHEEL_BOOST = 1.3;
 
 /**
  * Idle motion (tweak to taste). With direct decoding, the idle loops at either end are slow,
@@ -103,6 +103,8 @@ const BAND = {
  * so the bottom of the hero never shows as a hard line when it scrolls away.
  */
 const EXIT = { span: 0.75, lead: 0.2, rise: 0.2, melt: 0.12, page: [0.925, 0.925, 0.929] };
+/** The grey page rising over the bottom of the hero at the end. Off: the overview's own card covers the hero instead. */
+const HERO_EXIT = false;
 const LOOP_A = [...range(25, 52), ...range(51, 26)];
 const LOOP_B = [...range(109, 124), ...range(123, 110)];
 
@@ -1098,7 +1100,8 @@ export default function HeroVideo({
       // (and normal amounts once the glide has carried on past it).
       const isMouseWheel = e.deltaMode !== 0 || Math.abs(raw) >= 40;
       const pastHero = wheelActive && (wheelTarget > secTop + secH - vh || wheelTarget < secTop);
-      const dy = isMouseWheel && !pastHero ? raw * WHEEL_BOOST : raw;
+      // Capped per event, so a touchpad that reports big deltas many times a second can't fling the page
+      const dy = clamp(isMouseWheel && !pastHero ? raw * WHEEL_BOOST : raw, -200, 200);
       const heroEnd = secTop + secH - vh; // last scroll position where the hero is pinned
       if (!wheelActive) {
         // Only start gliding inside the hero; elsewhere the page scrolls as usual
@@ -1114,7 +1117,8 @@ export default function HeroVideo({
       // (no stop); once it settles outside the hero, normal scrolling takes over again.
       e.preventDefault();
       const maxY = Math.max(0, document.documentElement.scrollHeight - vh);
-      wheelTarget = clamp(wheelTarget + dy, 0, maxY);
+      // Never let queued input run more than about a screen ahead of where the page is
+      wheelTarget = clamp(wheelTarget + dy, Math.max(0, window.scrollY - vh), Math.min(maxY, window.scrollY + vh));
       lastWheel = performance.now();
       if (!calm) kickTarget = Math.min(1, kickTarget + Math.min(Math.abs(raw), 240) / 500);
     };
@@ -1410,12 +1414,12 @@ export default function HeroVideo({
       }
 
       // Scroll speed + progress (from cached measurements, no layout reads)
-      const breakPx = Math.max(secH - vh * (1 + EXIT.span), 1); // scroll that drives the break-apart
+      const breakPx = Math.max(secH - vh * (1 + (HERO_EXIT ? EXIT.span : 0)), 1); // scroll that drives the break-apart
       const target = clamp((scrollY - secTop) / breakPx, 0, 1);
       // after it, the exit (backdrop shrinks into a card)
       const exitTarget = clamp((scrollY - secTop - breakPx + EXIT.lead * vh) / ((EXIT.span + EXIT.lead) * vh), 0, 1);
       exitS += (exitTarget - exitS) * (1 - Math.exp(-dt * 11));
-      const exitE = 1 - Math.pow(1 - smooth(0, 1, exitS), 2); // settles softly at the top
+      const exitE = HERO_EXIT ? 1 - Math.pow(1 - smooth(0, 1, exitS), 2) : 0; // settles softly at the top
       const progBefore = prog;
       // (kept fairly quick: the wheel glide above already smooths mouse wheels)
       prog += (target - prog) * (1 - Math.exp(-dt * 18));
@@ -2039,7 +2043,7 @@ export default function HeroVideo({
       // the hero runs its own pinned wheel scrolling (it drives the break-apart), so the site-wide
       // smooth scroll in lib/scrollBus.ts leaves wheel events over it alone
       data-lenis-prevent=""
-      style={{ height: `${(scrollLength + (mode === "gl" ? EXIT.span : 0)) * 100}vh` }}
+      style={{ height: `${(scrollLength + (mode === "gl" && HERO_EXIT ? EXIT.span : 0)) * 100}vh` }}
     >
       <div ref={stageRef} className={styles.stage}>
         {/* Shown instantly while the clips load; the 3D canvas fades in over it */}
