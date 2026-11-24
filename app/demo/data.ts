@@ -5,7 +5,10 @@ export const DATE = "Wed 11 Nov 2026";
 export const NOW = 10 * 60 + 42; // 10:42, minutes since midnight
 export const SHIFT_START = 6 * 60;
 export const SHIFT_END = 14 * 60;
-export const MIN_GAP = 15; // minutes between two counted stitches on one machine
+/* Minimum build time for each tyre size, timed on site with the line supervisor. A stitch that comes
+   sooner than this after the last one on the same machine is flagged, not counted. */
+export const MIN_BUILD: Record<string, number> = { "185/65 R15": 15, "195/65 R15": 16 };
+export const minBuild = (size: string) => MIN_BUILD[size] ?? 15;
 export const HEARTBEAT_LIMIT = 2; // minutes without a heartbeat before an alert
 export const LINE = { id: "PL-1", kind: "pneumatic", size: "185/65 R15", label: "Line PL-1 · pneumatic" } as const;
 export const HERO = "GT-2611-0427";
@@ -33,13 +36,13 @@ export const PEOPLE = {
   supervisor: { name: "L. Gunasekara", role: "Shift supervisor" },
 };
 
-export type Machine = { id: string; size: string; signal: "PLC signal" | "Stitch button"; beat: number };
+export type Machine = { id: string; size: string; signal: "PLC signal" | "Auxiliary contacts"; beat: number };
 export const MACHINES: Machine[] = [
   { id: "BM-01", size: "185/65 R15", signal: "PLC signal", beat: 12 },
   { id: "BM-02", size: "185/65 R15", signal: "PLC signal", beat: 31 },
-  { id: "BM-03", size: "185/65 R15", signal: "Stitch button", beat: 8 },
+  { id: "BM-03", size: "185/65 R15", signal: "Auxiliary contacts", beat: 8 },
   { id: "BM-04", size: "185/65 R15", signal: "PLC signal", beat: 44 },
-  { id: "BM-05", size: "195/65 R15", signal: "Stitch button", beat: 19 },
+  { id: "BM-05", size: "195/65 R15", signal: "Auxiliary contacts", beat: 19 },
   { id: "BM-06", size: "195/65 R15", signal: "PLC signal", beat: 5 },
 ];
 export const PRESSES = Array.from({ length: 12 }, (_, i) => ({ id: `P-${String(i + 1).padStart(2, "0")}`, mould: `M-${String(i * 2 + 1).padStart(2, "0")}` }));
@@ -47,8 +50,8 @@ PRESSES[2].mould = "M-07";
 
 /* ---------- stitches: the only source of the count ---------- */
 
-export type StitchKind = "counted" | "flagged" | "unattributed";
-export type Stitch = { id: string; machine: string; at: number; kind: StitchKind; badge?: string; gap?: number; serial?: string; reason?: string };
+export type StitchKind = "counted" | "flagged";
+export type Stitch = { id: string; machine: string; at: number; kind: StitchKind; badge?: string; gap?: number; serial?: string; reason?: string; late?: boolean };
 
 let seed = 26111;
 const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
@@ -79,12 +82,12 @@ function generate() {
     let t = SHIFT_START + 7 + rnd() * 6;
     while (t < NOW) {
       stitches.push({ id: "", machine: m.id, at: t, kind: "counted", badge });
-      t += MIN_GAP + [1.0, 2.2, 1.6, 3.4, 4.6, 2.8][MACHINES.indexOf(m)] + rnd() * 3;
+      t += minBuild(m.size) + [1.0, 2.2, 1.6, 3.4, 4.6, 2.8][MACHINES.indexOf(m)] + rnd() * 3;
     }
   }
-  /* BM-06: first stitch came before the builder tapped in */
+  /* BM-06: the first stitch came before the builder tapped in, so it went to the first builder who signed in that shift */
   const first6 = stitches.find((x) => x.machine === "BM-06")!;
-  Object.assign(first6, { kind: "unattributed", badge: undefined, reason: "No badge logged in at BM-06. Builder D. Wickramasinghe tapped in 4 minutes later." });
+  Object.assign(first6, { late: true, reason: "No badge was logged in at BM-06 for this stitch. Credited to D. Wickramasinghe, the first builder to sign in at BM-06 this shift, 4 minutes later." });
   /* two stitches that came too soon after the last one: flagged, not counted */
   const tooSoon = (machine: string, near: number, after: number, reason: string) => {
     const mine = stitches.filter((x) => x.machine === machine && x.kind === "counted");
@@ -92,11 +95,11 @@ function generate() {
     stitches.push({ id: "", machine, at: prev.at + after, kind: "flagged", badge: prev.badge, gap: after, reason });
   };
   tooSoon("BM-02", 7 * 60 + 44, 3.5, "Stitch 3 min 30 s after the last one. A tyre can't be built that fast, so it was not counted.");
-  tooSoon("BM-04", 10 * 60 + 25, 6, "Stitch 6 min after the last one, under the 15 minute minimum. Not counted.");
+  tooSoon("BM-04", 10 * 60 + 25, 6, "Stitch 6 min after the last one, under the 15 minute minimum build time for 185/65 R15. Not counted.");
   stitches.sort((a, b) => a.at - b.at);
   stitches.forEach((x, i) => { x.id = `ST-${String(5000 + i)}`; });
 
-  /* every counted or unattributed stitch is a real tyre with a printed label */
+  /* every counted stitch is a real tyre with a printed label */
   const built = stitches.filter((x) => x.kind !== "flagged");
   const heroAt = built.filter((x) => x.machine === "BM-01").reduce((a, b) => (Math.abs(b.at - (8 * 60 + 12)) < Math.abs(a.at - (8 * 60 + 12)) ? b : a));
   heroAt.at = 8 * 60 + 12;
@@ -183,8 +186,8 @@ export function counts(machine?: string) {
   const list = machine ? STITCHES.filter((x) => x.machine === machine) : STITCHES;
   const counted = list.filter((x) => x.kind === "counted").length;
   const flagged = list.filter((x) => x.kind === "flagged").length;
-  const unattributed = list.filter((x) => x.kind === "unattributed").length;
-  return { signals: list.length, counted, flagged, unattributed };
+  const late = list.filter((x) => x.late).length;
+  return { signals: list.length, counted, flagged, late };
 }
 
 export function byHour() {
@@ -202,22 +205,22 @@ export type Severity = "high" | "medium" | "low";
 export type Alert = { id: string; at: number; severity: Severity; rule: string; title: string; where: string; text: string; report?: boolean; href?: string };
 
 const flag = (machine: string) => STITCHES.find((x) => x.kind === "flagged" && x.machine === machine)!;
-const unatt = STITCHES.find((x) => x.kind === "unattributed")!;
+const late = STITCHES.find((x) => x.late)!;
 const heavyTyre = TYRES.find((t) => t.result === "fail")!;
 
 export const ALERTS: Alert[] = [
   { id: "A-207", at: 9 * 60 + 52, severity: "high", rule: "Cure too cool", title: "P-03 ran below cure temperature", where: "P-03 · mould M-07",
     text: "148 °C against a spec of 155 °C, for more than 10 minutes, across four cure cycles from 09:05.", report: true },
-  { id: "A-206", at: flag("BM-04").at, severity: "medium", rule: "Min stitch interval", title: "Stitch too soon on BM-04", where: "BM-04 · A. Bandara",
+  { id: "A-206", at: flag("BM-04").at, severity: "medium", rule: "Minimum build time", title: "Stitch too soon on BM-04", where: "BM-04 · A. Bandara",
     text: flag("BM-04").reason!, href: "/demo/count#flags" },
   { id: "A-205", at: heavyTyre.inspectedAt!, severity: "medium", rule: "Weight out of spec", title: `${heavyTyre.serial} failed on weight`, where: `Inspection · ${heavyTyre.serial}`,
     text: heavyTyre.note!, href: `/demo/tyres?serial=${heavyTyre.serial}` },
-  { id: "A-204", at: flag("BM-02").at, severity: "low", rule: "Min stitch interval", title: "Stitch too soon on BM-02", where: "BM-02 · S. Fernando",
+  { id: "A-204", at: flag("BM-02").at, severity: "low", rule: "Minimum build time", title: "Stitch too soon on BM-02", where: "BM-02 · S. Fernando",
     text: flag("BM-02").reason!, href: "/demo/count#flags" },
   { id: "A-203", at: 7 * 60 + 23, severity: "low", rule: "Counter heartbeat", title: "BM-05 counter went quiet", where: "BM-05 edge device",
     text: "No heartbeat for 2 min 40 s. It came back at 07:26 and sent the stitches it had stored. No count was lost." },
-  { id: "A-202", at: unatt.at, severity: "medium", rule: "No badge at stitch", title: "Unattributed stitch on BM-06", where: "BM-06",
-    text: unatt.reason! + " Needs supervisor approval before it is credited.", href: "/demo/count#flags" },
+  { id: "A-202", at: late.at, severity: "low", rule: "No badge at stitch", title: "BM-06 build credited to the first builder signed in", where: "BM-06 · D. Wickramasinghe",
+    text: late.reason!, href: "/demo/count#flags" },
 ];
 
 /* the investigation report the AI Root-Cause Detective drafted for A-207 */
@@ -252,9 +255,10 @@ export const REPORT = {
 
 export type Rule = { id: string; name: string; when: string; limit: string; unit?: string; action: string; severity: Severity; stage: string; on: boolean };
 export const RULES: Rule[] = [
-  { id: "R-01", name: "Min stitch interval", when: "A stitch comes sooner than the minimum after the last one on the same machine", limit: "15", unit: "min", action: "Flag, don't count", severity: "medium", stage: "Building", on: true },
+  { id: "R-01", name: "Minimum build time, 185/65 R15", when: "A stitch comes sooner than the minimum build time for this size after the last one on the same machine", limit: "15", unit: "min", action: "Flag, don't count", severity: "medium", stage: "Building", on: true },
+  { id: "R-07", name: "Minimum build time, 195/65 R15", when: "A stitch comes sooner than the minimum build time for this size after the last one on the same machine", limit: "16", unit: "min", action: "Flag, don't count", severity: "medium", stage: "Building", on: true },
   { id: "R-02", name: "Counter heartbeat", when: "A counter sends no heartbeat for longer than the limit", limit: "2", unit: "min", action: "Alert supervisor", severity: "low", stage: "Building", on: true },
-  { id: "R-03", name: "No badge at stitch", when: "A stitch happens with no badge logged in at the machine", limit: "—", action: "Unattributed, needs approval", severity: "medium", stage: "Building", on: true },
+  { id: "R-03", name: "No badge at stitch", when: "A stitch happens with no badge logged in at the machine", limit: "—", action: "Credit to the first builder who signs in that shift", severity: "low", stage: "Building", on: true },
   { id: "R-04", name: "Cure too cool", when: "Press temperature stays below the limit for longer than 10 minutes", limit: "155", unit: "°C", action: "Alert engineer, start investigation", severity: "high", stage: "Curing", on: true },
   { id: "R-05", name: "Weight out of spec", when: "Inspection weight is outside the spec by more than the tolerance", limit: "1.5", unit: "%", action: "Fail and hold for engineer", severity: "medium", stage: "Inspection", on: true },
   { id: "R-06", name: "Expired material", when: "A material lot past its expiry date is scanned into a batch", limit: "—", action: "Block the scan, alert supervisor", severity: "high", stage: "Mixing", on: true },

@@ -527,7 +527,7 @@ export default function PassportDemo() {
           later(1500, () => put({ layers: 2 })); later(3000, () => put({ layers: 3 }));
         }),
         B("The auto-stitch rolls the tread down. Tyode reads that cycle from the machine, never from the builder.", 3800, () => fire("build")),
-        B("It looks like a real build, at least 15 minutes after the last one, with a builder signed in. It counts.", 4000, () => setCard({ at: [101, 15, 10.4], title: "Build checked", rows: [["Since last build", "17 min"], ["Builder", "K. Perera, 1042"], ["Count", "Verified"]] })),
+        B("It looks like a real build, at least the 15-minute minimum build time for its size after the last one, with a builder signed in. It counts.", 4000, () => setCard({ at: [101, 15, 10.4], title: "Build checked", rows: [["Since last build", "17 min"], ["Builder", "K. Perera, 1042"], ["Count", "Verified"]] })),
         B(`Only now does the tyre get an ID. The label printer prints ${L.hero}.`, 3600, () => { setCard(null); fire("idle"); put({ label: true }); setLens("p-label"); }),
         B("The stitch, the count, the batches and the label are saved.", 3000, () => save("build")),
       ], end({ entries: 3 })); break;
@@ -680,7 +680,7 @@ export default function PassportDemo() {
     if (scen.key === "soon") {
       say("Six minutes after the last tyre, the stitcher runs again.", 4400); lock(4200);
       later(1400, () => fire("soon"));
-      later(2200, () => setCard({ at: [101, 15, 10.4], title: "Build checked", tone: "warn", rows: [["Since last build", "6 min"], ["Minimum", "15 min"], ["Count", "Flagged, not counted"]] }));
+      later(2200, () => setCard({ at: [101, 15, 10.4], title: "Build checked", tone: "warn", rows: [["Since last build", "6 min"], ["Minimum build time", "15 min"], ["Count", "Flagged, not counted"]] }));
     }
     if (scen.key === "claim") {
       say("The returned tyre is scanned.", 2600); fire("claim"); lock(7600);

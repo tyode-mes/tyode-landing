@@ -2,7 +2,7 @@
 
 /* Green tyre counting: a guided concept demo with sample data.
    A technical drawing of the building area. The count comes only from the building machine's
-   auto-stitch signal, checked against a 15 minute minimum gap and the operator's badge. Nothing runs
+   auto-stitch signal, checked against the minimum build time for the tyre size (15 minutes here) and the operator's badge. Nothing runs
    on its own: the visitor steps through one tyre, then tries each way of cheating the count. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -124,7 +124,7 @@ function Tag({ x, y, lines, tone = "plain" }: { x: number; y: number; lines: str
 const BM = { "BM-01": { x: 5, y: 9 }, "BM-02": { x: 5, y: 34 } } as const;
 const CART = { x: 41, y: 25 };
 const PRESSES = [{ x: 75, y: 3 }, { x: 75, y: 17 }, { x: 75, y: 31 }, { x: 75, y: 45 }];
-const MIN_GAP = 15;
+const MIN_GAP = 15; // minimum build time for this tyre size, in minutes
 
 const drumPos = (): V3 => [BM["BM-01"].x + 7.2, BM["BM-01"].y + 6, 6];
 const cartSlot = (i: number): V3 => [CART.x + 1.6 + i * 1.75, CART.y + 2.5, 5.3];
@@ -175,8 +175,8 @@ const WALK: { title: string; body: string; action: string; result?: string; focu
   },
   {
     focus: "bm", title: "The auto-stitch is the count",
-    body: "The machine stitches the layers together automatically. Tyode reads that stitch from the machine's PLC signal, or from the stitch signal or button if there is no PLC. It only reads, it never changes the machine.",
-    action: "Run the auto-stitch", result: `Stitch at 06:21. A badge is logged in and there was no stitch in the last ${MIN_GAP} minutes, so it counts. BM-01 now reads 1.`,
+    body: "The machine stitches the layers together automatically. Tyode reads that stitch from the machine's PLC signal, or from clip-on auxiliary contacts that report its start, stitch and end if there is no PLC. It only reads, it never changes the machine.",
+    action: "Run the auto-stitch", result: `Stitch at 06:21. A badge is logged in and at least the ${MIN_GAP}-minute minimum build time for this size has passed since the last stitch, so it counts. BM-01 now reads 1.`,
   },
   {
     focus: "bm", title: "Its label prints",
@@ -207,7 +207,7 @@ const SCENARIOS: Scenario[] = [
     body: "A tyre is built and stitched before anyone taps a badge at the machine.",
     steps: [
       { action: "Sign out and build a tyre", result: "No badge is logged in at BM-01. A tyre is on the drum." },
-      { action: "Run the auto-stitch", result: "The stitch is real, but no badge is logged in. It is unattributed: not given to anyone until a supervisor approves it." },
+      { action: "Run the auto-stitch", result: "The stitch is real, so it counts and a label prints. No badge is logged in, so the tyre is credited to the first builder who signs in at BM-01 this shift." },
     ],
   },
   {
@@ -361,7 +361,7 @@ function Floor({ st, now, focus }: { st: State; now: number; focus: Focus }) {
   const lines = on("manual", 0, 9e9) ? ["BM-01 · count is read-only", "Comes only from stitch signals", "Counter online"]
     : on("refuse", 0, 9e9) ? ["BM-01 · label refused", "No counted stitch to label", "Counter online"]
     : on("again", 700, 9e9) ? ["BM-01 · stitch too soon", `${st.last !== null ? st.clock - st.last : 4} min after the last · flagged`, `Count ${counted}`]
-    : on("nbstitch", 700, 9e9) ? ["BM-01 · no badge logged in", "Unattributed · needs approval", `Count ${counted}`]
+    : on("nbstitch", 700, 9e9) ? ["BM-01 · no badge logged in", "Counted · goes to the next sign-in", `Count ${counted}`]
     : on("alarm", 0, 9e9) ? ["BM-01 · counter offline", "No heartbeat for 2 min", "Alert sent to supervisor"]
     : on("unplug", 0, 9e9) ? ["BM-01 · counter offline", "No heartbeat", `Count ${counted}`]
     : [`BM-01 · ${st.badge ? "K. Perera · 1042" : "no one signed in"}`, `Count ${counted}${on("stitch", 1500, 4200) ? ` · label ${st.label}` : ""}`, st.online ? "Counter online · heartbeat" : "Counter offline"];
@@ -436,7 +436,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
     const serial = serialOf(x.seq + 1);
     const n: State = { ...x, clock: at, last: at, seq: x.seq + 1, label: serial, labels: x.labels + 1, fx: fxOf("stitch"),
       counted: [...x.counted, { serial, builtAt: at }] };
-    return log(n, "ok", `Stitch on BM-01, badge 1042. At least ${MIN_GAP} min since the last one. Counted, label ${serial} printed.`);
+    return log(n, "ok", `Stitch on BM-01, badge 1042. At least the ${MIN_GAP} min minimum build time since the last one. Counted, label ${serial} printed.`);
   };
 
   const setupState = (): State => {
@@ -478,8 +478,11 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
         }
         case "nobadge":
           if (i === 0) return log({ ...x, badge: false, drum: "built", clock: Math.max(x.clock, (x.last ?? 21) + 10), fx: fxOf("nbbuild") }, "info", "Badge 1042 signed out at BM-01. A tyre is built on the drum.");
-          return log({ ...x, clock: Math.max(x.clock + 8, (x.last ?? 21) + MIN_GAP + 2), unattributed: x.unattributed + 1, labels: x.labels + 1, seq: x.seq + 1,
-            label: serialOf(x.seq + 1), drum: "empty", fx: fxOf("nbstitch") }, "warn", `Stitch on BM-01 with no badge logged in. Unattributed, label ${serialOf(x.seq + 1)} printed, waiting for supervisor approval.`);
+          {
+            const at = Math.max(x.clock + 8, (x.last ?? 21) + MIN_GAP + 2), serial = serialOf(x.seq + 1);
+            return log({ ...x, clock: at, last: at, unattributed: x.unattributed + 1, labels: x.labels + 1, seq: x.seq + 1, counted: [...x.counted, { serial, builtAt: at }],
+              label: serial, drum: "empty", fx: fxOf("nbstitch") }, "warn", `Stitch on BM-01 with no badge logged in. Counted, label ${serial} printed. It goes to the first builder who signs in at BM-01 this shift.`);
+          }
         case "manual": return log({ ...x, clock: x.clock + 1, flagged: x.flagged + 1, fx: fxOf("manual") }, "bad", "Attempt to change the count at BM-01. The count is read-only. Logged.");
         case "label": return log({ ...x, clock: x.clock + 1, fx: fxOf("refuse") }, "bad", "Label requested at BM-01 with no counted stitch. Refused. Logged.");
         case "unplug":
@@ -500,7 +503,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
   const tidy = (x: State): State => {
     let n = x;
     if (!n.online) n = log({ ...n, online: true, fx: null }, "info", "BM-01 counter plugged back in. Heartbeat restored.");
-    if (!n.badge) n = log({ ...n, badge: true, fx: null }, "info", "Badge 1042 signed in again at BM-01.");
+    if (!n.badge) n = log({ ...n, badge: true, fx: null }, "info", `Badge 1042 signed in again at BM-01.${n.unattributed ? " The stitch with no badge is credited to K. Perera, the first builder to sign in." : ""}`);
     return { ...n, drum: "empty" };
   };
   const openScenario = (sc: Scenario) => {
@@ -543,7 +546,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
           <div className={s.counts}>
             <div><b>{st.counted.length}</b><span>Counted (verified)</span></div>
             <div className={st.flagged ? s.cAmber : ""}><b>{st.flagged}</b><span>Flagged attempts</span></div>
-            <div className={st.unattributed ? s.cAmber : ""}><b>{st.unattributed}</b><span>Unattributed</span></div>
+            <div><b>{st.unattributed}</b><span>Credited late</span></div>
             <div><b>{st.labels}</b><span>Labels printed</span></div>
             <div className={st.online ? "" : s.cRed}><b>{st.online ? "1/1" : "0/1"}</b><span>Counter online</span></div>
           </div>
@@ -644,7 +647,7 @@ export default function CountingDemo({ embedded = false }: { embedded?: boolean 
           )}
           <h3 className={s.gap}>How it is installed</h3>
           <ul className={s.notes}>
-            <li>Tyode reads the machine&apos;s auto-stitch: the PLC signal, or the stitch signal or button. Read only.</li>
+            <li>Tyode reads the machine&apos;s auto-stitch: the PLC signal, or the start, stitch and end signals from clip-on auxiliary contacts on the existing contactors. Read only.</li>
             <li>A badge reader and a label printer at each building machine.</li>
             <li>Each counter sends a heartbeat every minute. Scrap is recorded separately.</li>
             <li>Runs alongside the current count until the plant approves the switch.</li>

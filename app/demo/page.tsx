@@ -3,7 +3,7 @@
 /* Overview: the demo's home screen, from the Figma prototype. One look at the line: counts, alerts,
    holds and devices, the tyres at each pilot stage, what needs attention and the latest activity.
    Every number comes from the same sample data and demo state as the other screens, so approving a
-   report or a stitch elsewhere changes it here too. */
+   report elsewhere changes it here too. */
 
 import Link from "next/link";
 import { COOL, DEVICES, LINE, NOW, PEOPLE, TYRES, counts, events, hhmm } from "./data";
@@ -16,9 +16,8 @@ const greeting = (m: number) => (m < 12 * 60 ? "Good morning" : m < 17 * 60 ? "G
 export default function Overview() {
   const { st } = useDemo();
   const c = counts();
-  const counted = c.counted + (st.approvedUnattributed ? 1 : 0);
-  const unatt = st.approvedUnattributed ? 0 : c.unattributed;
-  const uncounted = c.flagged + unatt;
+  const counted = c.counted;
+  const uncounted = c.flagged;
   const open = openAlerts(st);
   const high = open.filter((a) => a.severity === "high");
   const held = heldList(st);
@@ -41,8 +40,6 @@ export default function Overview() {
     todo.push({ tone: "red", tag: "High", title: "P-03 ran below cure temperature", sub: `Investigation report ready to review · ${COOL.length} tyres affected`, href: "/demo/alerts" });
   if (c.flagged)
     todo.push({ tone: "amber", tag: "Review", title: `${c.flagged} build cycle${c.flagged > 1 ? "s" : ""} not counted`, sub: "Shorter than the minimum build time · supervisor to approve or reject", href: "/demo/count#flags" });
-  if (unatt)
-    todo.push({ tone: "amber", tag: "Review", title: `${unatt} build with no builder signed in`, sub: "Not credited yet · needs supervisor approval", href: "/demo/count#flags" });
   /* holds: one row per tyre held at inspection, one row per hold placed on a group of tyres */
   held.filter((t) => t.stage === "held").forEach((t) =>
     todo.push({ tone: "grey", tag: "Hold", title: `${t.serial} on hold`, sub: "Weight above spec · waiting for an engineer", href: `/demo/tyres?serial=${t.serial}` }));

@@ -41,7 +41,7 @@ function Passport({ t }: { t: Tyre }) {
   const hold = holdOf(t.serial, st);
   const spec = SPEC[t.size as keyof typeof SPEC];
   const cool = (t.peak ?? 200) < CURE_MIN;
-  const unattributed = stitch.kind === "unattributed" && !st.approvedUnattributed;
+  const late = !!stitch.late;
   const steps = [
     { k: "Building", done: true, at: hhmm(t.builtAt) },
     { k: "Curing", done: !!t.cureEnd && t.stage !== "curing", now: t.stage === "curing", at: t.cureStart ? `${hhmm(t.cureStart)}–${hhmm(t.cureEnd!)}` : "—" },
@@ -76,9 +76,9 @@ function Passport({ t }: { t: Tyre }) {
         <Card title="Building">
           <div className={s.facts}>
             <div><span>Machine</span><b>{t.machine}</b></div>
-            <div><span>Builder</span><b>{b ? `${b.name} · badge ${b.badge}` : unattributed ? "Unattributed, waiting for approval" : "D. Wickramasinghe (approved)"}</b></div>
+            <div><span>Builder</span><b>{b ? `${b.name} · badge ${b.badge}${late ? " (first builder signed in)" : ""}` : "—"}</b></div>
             <div><span>Stitched</span><b>{hhmm(t.builtAt)} · signal {stitch.id}</b></div>
-            <div><span>Count</span><b className={unattributed ? s.amberT : s.greenT}>{unattributed ? "Pending approval" : "Verified ✓"}</b></div>
+            <div><span>Count</span><b className={s.greenT}>Verified ✓</b></div>
           </div>
           <h3 className={s.subH}>Compound batches</h3>
           <div className={s.batchRow}>
