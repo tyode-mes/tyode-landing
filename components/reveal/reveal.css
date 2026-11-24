@@ -1,0 +1,18 @@
+/* Used by ScrollReveal.tsx: the same soft rise, fade and focus as the rest of the landing page */
+[data-rv] {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--rv-d, 0s),
+    transform 1.1s cubic-bezier(0.22, 1, 0.36, 1) var(--rv-d, 0s),
+    filter 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--rv-d, 0s);
+}
+[data-rv].rv-in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-rv] { opacity: 1; transform: none; filter: none; transition: none; }
+}

@@ -10,6 +10,7 @@ import Prototype from "@/sections/05b-prototype/Prototype";
 import Team from "@/sections/07-team/Team";
 import Footer from "@/sections/08-footer/Footer";
 import Partners from "@/sections/06-partners/Partners";
+import ScrollReveal from "@/components/reveal/ScrollReveal";
 
 export default function Home() {
   return (
@@ -25,6 +26,7 @@ export default function Home() {
         <Team />
       </main>
       <Footer />
+      <ScrollReveal />
     </>
   );
-}
+}
