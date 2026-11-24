@@ -836,13 +836,23 @@ export default function HeroVideo({
     // the lighter render settings below).
     // Pick the clips by how many pixels the hero really draws, not by the "small screen" test above: that one
     // also catches laptops whose browser window is under 700px tall, and the 768px lite clips stretched across
-    // a laptop look blurry. Phones (drawn at 1x, see MAX_DPR) and small windows still get the lighter clips.
-    const drawnWidth = window.innerWidth * Math.min(window.devicePixelRatio || 1, lite ? 1 : 2);
-    const clips = sd && (slowNet || drawnWidth < 900) ? sd : hd;
+    // a laptop look blurry. The video fills the hero like a cover image, so on a tall phone screen only a narrow
+    // slice of it is visible, zoomed in: what matters is the width of the whole (16:9) video picture on screen,
+    // in device pixels, which on phones is several times the screen width. Only very low-memory devices and
+    // slow or data-saving connections keep the lighter clips there.
+    const drawnWidth = Math.max(window.innerWidth, (window.innerHeight * 16) / 9) * Math.min(window.devicePixelRatio || 1, 2);
+    const tinyMemory = (nav.deviceMemory ?? 8) <= 2;
+    const clips = sd && (slowNet || tinyMemory || drawnWidth < 900) ? sd : hd;
     const GRID_X = lite ? 200 : 320;
     const GRID_Y = lite ? 112 : 180;
     const MAX_SCALE = lite ? 1.0 : 1.5; // render scale relative to the screen (above 1 = anti-aliasing)
     const MIN_SCALE = 0.55;
+    // Tall (phone) screens: the machine runs along a shallow diagonal, which leaves a tall screen
+    // mostly empty or, filled by height, shows only a zoomed-in slice. There the camera pulls back
+    // (PORTRAIT_VIEW: share of the scene width kept in view) and turns the machine more upright
+    // (PORTRAIT_ROLL, radians) so it fills the height. Fades out between 4:5 and 1:2 screens.
+    const PORTRAIT_VIEW = 0.34;
+    const PORTRAIT_ROLL = 0.3;
 
     const gl = canvas.getContext("webgl2", {
       antialias: false,
@@ -1826,11 +1836,16 @@ export default function HeroVideo({
       const lean = velFx;
       const sa = sceneW / sceneH;
       let dist = (0.5 / Math.tan(fov / 2)) * Math.min(1, aspect / sa) * 1.14;
+      // Tall (phone) screens: filling the height would show only a narrow, zoomed-in slice of the
+      // scene, so pull the camera back (see PORTRAIT_VIEW).
+      dist *= Math.max(1, (PORTRAIT_VIEW * aspect) / sa);
       dist *= (1 - push * 0.05) * (1 - introE * 0.05) * (1 - kick * 0.012);
       const yaw = -0.06 + arc * 0.22 + msX * 0.13 + driftX * 0.025 + holdMix * 0.04 * Math.sin(t * 0.22);
       const pitch =
         0.03 - smooth(0.1, 0.9, prog) * 0.09 + msY * 0.085 + driftY * 0.018 + lean * 0.015 + holdMix * 0.018 * Math.sin(t * 0.29);
-      const roll = -arc * 0.035 + msX * 0.012 + lean * 0.008;
+      const tallK = clamp((0.8 - sa) / 0.3, 0, 1); // 1 on phones, 0 from about 4:5 up
+      const tallRoll = PORTRAIT_ROLL * tallK;
+      const roll = -arc * 0.035 + msX * 0.012 + lean * 0.008 + tallRoll;
       const tx = -smooth(0.3, 1, prog) * 0.04;
       const tz = 0.08;
       perspectiveInto(proj, fov, sa, 0.02, 20);
@@ -1963,7 +1978,7 @@ export default function HeroVideo({
           const base = cssH - gutter * 1.15 - prog * 0.18 * cssH - fsz * BAND.lift + msY * 14 * BAND.parallax;
           const yTop = base - fsz * BAND.top;
           const yBot = base - fsz * BAND.bottom;
-          gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -roll * 0.9, BAND.opacity * tA);
+          gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -(roll - tallRoll) * 0.9, BAND.opacity * tA);
           gl.uniform1f(postProg.u("uBandX"), cssW * 0.5 * kk);
           const ls = BAND.labelSize / LABEL_PX;
           const lx0 = cssW * BAND.labelX;
