@@ -157,5 +157,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function DemoShell({ children }: { children: React.ReactNode }) {
+  // client sign-in and the signed-in client page are full-screen pages of their own, without the demo frame
+  const path = usePathname() ?? "";
+  if (path.startsWith("/demo/sign-in") || path.startsWith("/demo/client")) return <>{children}</>;
   return <DemoProvider><Shell>{children}</Shell></DemoProvider>;
 }
