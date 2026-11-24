@@ -149,9 +149,26 @@
 }
 
 .link:hover::after,
-.link:focus-visible::after {
+.link:focus-visible::after,
+.link[aria-current]::after {
   opacity: 1;
   transform: none;
+}
+
+/* the section you're in: its link stays lit, with its own soft pill. While the pointer is over
+   the links, the sliding hover pill takes over so the two never stack. */
+.link[aria-current] {
+  color: #fff;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.link {
+  transition: color 0.25s ease, background 0.35s ease;
+}
+
+.links:has(.pill[data-on]) .link[aria-current] {
+  background: transparent;
 }
 
 .end {
@@ -278,6 +295,11 @@
 
 .panelLink:hover {
   background: rgb(255 255 255 / 0.06);
+}
+
+/* the section you're in, in the dropdown menu */
+.panelLink[aria-current] {
+  background: rgb(255 255 255 / 0.1);
 }
 
 .panelCta {

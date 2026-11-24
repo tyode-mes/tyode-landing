@@ -14,7 +14,9 @@ import styles from "./SiteNav.module.css";
 - and a fine line along the bottom edge that fills as you scroll down the page. It tightens
 - gradually as you scroll down the first part of the page. On small screens the links fold into a menu button.
  *
-- Links point at the section ids in /sections (see app/page.tsx).
+- Links point at the section ids in /sections (see app/page.tsx). The link for the section you're
+- in stays lit (white text, a soft pill and a dot), following the scroll; clicking a link lights it
+- straight away and holds it there while the page glides to that section.
  */
 const LINKS = [
   { href: "#overview", label: "Overview" },
@@ -23,6 +25,10 @@ const LINKS = [
   { href: "#team", label: "Team" },
   { href: "/demo", label: "Live demo" },
 ];
+// the on-page sections the nav tracks, in page order
+const SECTIONS = LINKS.filter((l) => l.href.startsWith("#")).map((l) => l.href.slice(1));
+// a section counts as "current" once its top passes this far down the screen
+const LINE = 0.4;
 // opens the team's Cal.com booking calendar in a pop-up over the site (see components/booking)
 const CTA = { href: BOOKING_URL, label: "Book a walkthrough" };
 
@@ -40,6 +46,47 @@ export default function SiteNav() {
     const a = e.currentTarget;
     setPill({ x: a.offsetLeft, w: a.offsetWidth });
   };
+  // the section you're in (its id), or null above the first one
+  const [active, setActive] = useState<string | null>(null);
+  // after a click, hold that link lit while the page glides past the sections in between
+  const hold = useRef<{ id: string; until: number } | null>(null);
+  const pick = (href: string, at: number) => {
+    if (!href.startsWith("#")) return;
+    const id = href.slice(1);
+    hold.current = { id, until: at + 1600 };
+    setActive(id);
+  };
+
+  // follow the scroll: the current section is the last one whose top has passed the line
+  useEffect(() => {
+    let tops: { id: string; top: number }[] = [];
+    const measure = () => {
+      tops = SECTIONS.map((id) => {
+        const el = document.getElementById(id);
+        return { id, top: el ? el.getBoundingClientRect().top + window.scrollY : Infinity };
+      });
+    };
+    measure();
+    // some sections size themselves after load (the 3D story, reveals): measure again once they have
+    const late = window.setTimeout(measure, 1500);
+    const unsubResize = scrollBus.onResize(measure);
+    const unsubScroll = scrollBus.subscribe((s) => {
+      const line = s.y + s.vh * LINE;
+      let id: string | null = null;
+      for (const t of tops) if (t.top <= line) id = t.id;
+      const h = hold.current;
+      if (h) {
+        if (id !== h.id && performance.now() < h.until) return;
+        hold.current = null;
+      }
+      setActive((a) => (a === id ? a : id));
+    });
+    return () => {
+      window.clearTimeout(late);
+      unsubResize();
+      unsubScroll();
+    };
+  }, []);
 
   useEffect(() => {
     const nav = ref.current;
@@ -93,6 +140,8 @@ export default function SiteNav() {
               key={l.label}
               href={l.href}
               className={styles.link}
+              aria-current={l.href === `#${active}` ? "location" : undefined}
+              onClick={(e) => pick(l.href, e.timeStamp)}
               onPointerEnter={showPill}
               onFocus={showPill}
               onBlur={() => setPill(null)}
@@ -128,7 +177,16 @@ export default function SiteNav() {
       {/* small screens: the links, dropped down under the bar */}
       <div id="site-menu" className={styles.panel} hidden={!open}>
         {LINKS.map((l) => (
-          <a key={l.label} href={l.href} className={styles.panelLink} onClick={() => setOpen(false)}>
+          <a
+            key={l.label}
+            href={l.href}
+            className={styles.panelLink}
+            aria-current={l.href === `#${active}` ? "location" : undefined}
+            onClick={(e) => {
+              setOpen(false);
+              pick(l.href, e.timeStamp);
+            }}
+          >
             {l.label}
           </a>
         ))}
