@@ -50,11 +50,12 @@
   overflow: hidden;
 }
 
+/* the two ends share the leftover room equally, which keeps the links centred */
 .start {
   display: flex;
   align-items: center;
   gap: 18px;
-  flex: none;
+  flex: 1 1 0;
 }
 
 /* fine print after the logo, behind a thin divider */
@@ -84,12 +85,11 @@
 
 /* links in the middle */
 .links {
-  position: absolute;
-  left: 50%;
+  position: relative;
   display: flex;
+  flex: none;
   align-items: center;
   gap: 4px;
-  transform: translateX(-50%);
 }
 
 /* soft pill that slides to the link under the pointer */
@@ -175,8 +175,56 @@
 .end {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 0;
+}
+
+/* client sign-in: an outlined pill with a staff card, beside the white pill */
+.signIn {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
   flex: none;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18) inset;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.signIn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chip {
+  fill: #ff4d2e;
+  stroke: none;
+}
+
+/* hover: the card tips forward, as if it's being tapped */
+.signIn:hover,
+.signIn:focus-visible {
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.32) inset;
+}
+
+.signIn:hover svg,
+.signIn:focus-visible svg {
+  transform: rotate(-10deg) translateY(-1px);
 }
 
 /* white pill on the right */
@@ -328,6 +376,12 @@
   }
 }
 
+@media (min-width: 1101px) and (max-width: 1320px) {
+  .link {
+    padding-inline: 13px;
+  }
+}
+
 @media (max-width: 1100px) {
   .links {
     display: none;
@@ -335,6 +389,19 @@
 
   .menu {
     display: grid;
+  }
+}
+
+/* phones: "Book a walkthrough" moves into the menu, so Sign in always has room in the bar */
+@media (max-width: 560px) {
+  .cta {
+    display: none;
+  }
+
+  .signIn {
+    height: 40px;
+    padding: 0 14px 0 11px;
+    font-size: 13.5px;
   }
 }
 
@@ -356,4 +423,21 @@
     transition: none;
     animation: none;
   }
+}
+
+/* "Client sign in" at the bottom of the dropdown menu */
+.panelSignIn {
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.panelSignIn:hover {
+  background: rgb(255 255 255 / 0.06);
 }

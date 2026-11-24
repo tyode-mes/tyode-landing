@@ -31,6 +31,8 @@ const SECTIONS = LINKS.filter((l) => l.href.startsWith("#")).map((l) => l.href.s
 const LINE = 0.4;
 // opens the team's Cal.com booking calendar in a pop-up over the site (see components/booking)
 const CTA = { href: BOOKING_URL, label: "Book a walkthrough" };
+// clients sign in to their own edition of Tyode (the public demo stays open to everyone)
+const SIGN_IN = { href: "/demo/sign-in", label: "Client sign in" };
 
 // logo size in the bar: the whole logo (ascender to descender) this many px tall
 const LOGO_PX = 27;
@@ -152,6 +154,17 @@ export default function SiteNav() {
         </nav>
 
         <div className={styles.end}>
+          {/* client sign-in, with a staff card like the ones builders tap at the line */}
+          <a href={SIGN_IN.href} className={styles.signIn} title="Client sign in">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5.5" width="18" height="13" rx="2.6" />
+              <circle cx="8.6" cy="11" r="2" />
+              <path d="M5.8 15.6c.6-1.3 1.6-2 2.8-2s2.2.7 2.8 2" />
+              <path d="M14 10h4M14 13h2.6" />
+              <circle className={styles.chip} cx="18.2" cy="8" r="1.1" />
+            </svg>
+            <span>Sign in</span>
+          </a>
           <a href={CTA.href} className={styles.cta} target="_blank" rel="noopener noreferrer" onClick={openBooking}>
             {CTA.label}
             <span className={styles.arrow} aria-hidden="true">
@@ -201,6 +214,9 @@ export default function SiteNav() {
           }}
         >
           {CTA.label} →
+        </a>
+        <a href={SIGN_IN.href} className={styles.panelSignIn} onClick={() => setOpen(false)}>
+          {SIGN_IN.label}
         </a>
       </div>
 
