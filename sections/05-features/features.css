@@ -12,7 +12,7 @@
 .ft :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
 /* intro */
-.ft-intro{padding:clamp(96px,14vh,160px) clamp(20px,4vw,56px) clamp(40px,6vh,72px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,36ch);gap:clamp(28px,4vw,72px);align-items:end;max-width:1600px;margin:0 auto}
+.ft-intro{padding:clamp(56px,8vh,96px) clamp(20px,4vw,56px) clamp(40px,6vh,72px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,36ch);gap:clamp(28px,4vw,72px);align-items:end;max-width:1600px;margin:0 auto}
 .ft-kicker{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);padding-bottom:18px;border-bottom:1px solid var(--hair)}
 .ft-h{margin:0;font-size:clamp(2.6rem,7vw,7.2rem);font-weight:500;letter-spacing:-.05em;line-height:.96}
 .ft-h .ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
@@ -221,3 +221,9 @@
   .ft .sc .void{opacity:1}
   .ft .ft-h .ln > span{transform:none}.ft .ft-lede{opacity:1;transform:none}
 }
+/* Intro: exactly the same headline style as "Nothing written by hand." in How it works, both lines kept whole, and the lede sized to sit beside it */
+.ft-intro{grid-template-columns:minmax(0,1fr) minmax(0,40ch);align-items:end}
+.ft-h{font-size:clamp(2.4rem,5.6vw,5.4rem);font-weight:600;letter-spacing:-.05em;line-height:1}
+.ft-h .ln + .ln > span{color:#77777c}
+.ft-lede{max-width:40ch;padding-bottom:.6em;font-size:clamp(15px,1.15vw,17px);line-height:1.55;color:var(--ink-2)}
+@media (max-width:900px){.ft-lede{padding-bottom:0}}

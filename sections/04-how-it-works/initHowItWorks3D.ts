@@ -283,7 +283,7 @@ export function initHowItWorks3D(sec: HTMLElement): () => void {
     camera.fov = camera.aspect < 0.8 ? 40 : camera.aspect < 1.2 ? 33 : 28;
     const w = Math.round(stageW), h = Math.round(stageH);
     if (camera.aspect >= 1.2) {
-      camera.setViewOffset(w, h, -Math.round(w * 0.04), Math.round(h * 0.085), w, h);
+      camera.setViewOffset(w, h, -Math.round(w * 0.04), -Math.round(h * 0.01), w, h); // desktop: tyre sits a little lower, clear of the nav and stage bar
     } else {
       camera.setViewOffset(w, h, 0, Math.round(h * 0.16), w, h);
       const gap = Math.max(140, h - 320 - 96);
