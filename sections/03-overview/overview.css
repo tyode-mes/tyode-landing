@@ -24,7 +24,7 @@
 .ov .ln + .ln > span{transition-delay:.12s}
 
 /* headline: lines rise, then a scroll-linked focus pull settles the type */
-.ov .ov-head{--p:0;max-width:1000px;margin:0 auto;text-align:center}
+.ov .ov-head{--p:0;max-width:1100px;margin:0 auto;text-align:center} /* room for "Process intelligence" on one line at the largest size */
 .ov .ov-kicker{display:inline-block;font-size:13px;font-weight:600;color:var(--ink-2);
   opacity:0;transform:translateY(8px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
 .ov .ov-head.in .ov-kicker{opacity:1;transform:none}

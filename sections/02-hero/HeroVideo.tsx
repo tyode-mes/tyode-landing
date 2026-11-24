@@ -1718,7 +1718,18 @@ export default function HeroVideo({
             if (fr.displayWidth === texW && fr.displayHeight === texH) {
               gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, fr);
             } else {
-              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fr);
+              // First frame (or a size change) arrives here when the page loads already scrolled
+              // into the hero, e.g. after a reload: size both textures and record the size, or the
+              // scene has no aspect ratio (draws nothing) and blends against an empty texture.
+              texW = fr.displayWidth;
+              texH = fr.displayHeight;
+              halfTexel = 0.5 / texH;
+              for (const tx of vidTexs) {
+                gl.bindTexture(gl.TEXTURE_2D, tx);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fr);
+              }
+              texF[0] = texF[1] = n;
+              gl.bindTexture(gl.TEXTURE_2D, vidTexs[target]);
             }
             texF[target] = n;
             newestTex = curTex = target;
@@ -1731,6 +1742,13 @@ export default function HeroVideo({
           else curTex = Math.abs(fNow - lo) <= Math.abs(hi - fNow) ? (texF[0] === lo ? 0 : 1) : texF[0] === hi ? 0 : 1;
           vidTex = vidTexs[curTex];
           shownBreak = texF[curTex];
+        }
+        // The first frame can come from the stream (the page loaded already scrolled into the hero, e.g.
+        // after a reload): it counts as ready too, or the hero would stay on its poster for good.
+        if (newFrame && !hasFrame) {
+          hasFrame = true;
+          firstFrameAt = t;
+          stage.dataset.ready = "true";
         }
       }
       if (

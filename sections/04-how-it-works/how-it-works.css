@@ -247,3 +247,29 @@
 @media (min-width:1300px){.h3 .h3-close{max-width:calc(1072px * 1.08 + 48px)}.h3 .h3-cmp{zoom:1.08}}
 @media (min-width:1500px){.h3 .h3-close{max-width:calc(1072px * 1.16 + 48px)}.h3 .h3-cmp{zoom:1.16}}
 @media (min-width:1800px){.h3 .h3-close{max-width:calc(1072px * 1.26 + 48px)}.h3 .h3-cmp{zoom:1.26}}
+/* labels on the tyre (Tread, Cushion, Base...): a proper entrance each time one appears. The dot pops in
+   and sends out a ring, the line draws out, the card rises out of a blur, then its name and code slide up.
+   In the build stage the three labels come in one after another, from the inside out. The 3D code still
+   places the labels and switches .on; this only styles how they arrive. Leaving is quick and undelayed. */
+.h3 .h3-tag{--td:0s}
+.h3 .h3-tag[data-tag="cush"]{--td:.14s}
+.h3 .h3-tag[data-tag="tread"]{--td:.28s}
+.h3 .h3-tag i{position:relative;transform:scale(0);transition:transform .25s var(--ease)}
+.h3 .h3-tag.on i{transform:scale(1);transition:transform .55s cubic-bezier(.34,1.56,.64,1) var(--td)}
+.h3 .h3-tag i::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--ink);opacity:0;pointer-events:none}
+.h3 .h3-tag.on i::after{animation:h3-tag-ping 1.2s var(--ease) calc(var(--td) + .08s) both}
+@keyframes h3-tag-ping{0%{opacity:.55;transform:scale(.6)}100%{opacity:0;transform:scale(2.8)}}
+.h3 .h3-tag span{transition:transform .25s var(--ease)}
+.h3 .h3-tag.on span{transition:transform .6s var(--ease) calc(var(--td) + .14s)}
+.h3 .h3-tag div{opacity:0;filter:blur(6px);transform:translate3d(-12px,6px,0) scale(.94);transform-origin:left center;
+  transition:opacity .25s var(--ease),filter .25s var(--ease),transform .3s var(--ease)}
+.h3 .h3-tag.flip div{transform:translate3d(12px,6px,0) scale(.94);transform-origin:right center}
+.h3 .h3-tag.on div,.h3 .h3-tag.flip.on div{opacity:1;filter:none;transform:none;
+  transition:opacity .55s var(--ease) calc(var(--td) + .28s),filter .7s var(--ease) calc(var(--td) + .28s),transform .8s var(--ease) calc(var(--td) + .28s)}
+.h3 .h3-tag b,.h3 .h3-tag em{opacity:0;transform:translate3d(0,6px,0);transition:opacity .2s var(--ease),transform .2s var(--ease)}
+.h3 .h3-tag.on b{opacity:1;transform:none;transition:opacity .5s var(--ease) calc(var(--td) + .4s),transform .6s var(--ease) calc(var(--td) + .4s)}
+.h3 .h3-tag.on em{opacity:1;transform:none;transition:opacity .5s var(--ease) calc(var(--td) + .5s),transform .6s var(--ease) calc(var(--td) + .5s)}
+@media (prefers-reduced-motion:reduce){
+  .h3 .h3-tag i,.h3 .h3-tag div,.h3 .h3-tag b,.h3 .h3-tag em{transform:none;filter:none}
+  .h3 .h3-tag.on b,.h3 .h3-tag.on em,.h3 .h3-tag.on div{opacity:1}
+}
