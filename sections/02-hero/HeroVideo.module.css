@@ -216,8 +216,9 @@
   opacity: clamp(0.38, calc(1 - max(var(--scan) - var(--i), var(--i) - var(--scan)) * 5), 1);
 }
 
-/* the intro waits until the scene is ready (or the plain-video fallback is showing) */
-.stage:not([data-ready="true"]):not([data-mode="fallback"]) .sub * {
+/* the intro waits until the scene is ready (or the plain-video fallback is showing), but never more
+   than about 3 s (data-text-in), so the headline still comes in if the 3D is slow or can't start */
+.stage:not([data-ready="true"]):not([data-mode="fallback"]):not([data-text-in]) .sub * {
   animation-play-state: paused;
 }
 
@@ -285,6 +286,43 @@
   /* the paragraph and layer names would run into the arm here: line and rule carry it */
   .body,
   .names {
+    display: none;
+  }
+}
+
+/* Phones held upright: the machine is framed for the tall screen (see PORTRAIT_VIEW in HeroVideo.tsx)
+   and leaves the bottom clear, so the headline and rule stay at the top with the stage names under
+   the rule, and the paragraph sits at the bottom, like the text under the band on wider screens */
+@media (max-width: 900px) and (max-aspect-ratio: 4/5) {
+  .sub {
+    bottom: calc(var(--gut) + env(safe-area-inset-bottom, 0px));
+    grid-template-rows: auto auto 1fr;
+    align-items: start;
+  }
+
+  .lead {
+    grid-row: 1;
+  }
+
+  .layers {
+    grid-row: 2;
+    margin-top: 2px;
+  }
+
+  .names {
+    display: block;
+  }
+
+  .body {
+    display: block;
+    grid-row: 3;
+    align-self: end;
+    max-width: 36ch;
+    font-size: 14px;
+  }
+
+  /* plain-video fallback: the pill would sit on the headline */
+  .pill {
     display: none;
   }
 }

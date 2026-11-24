@@ -869,6 +869,25 @@ export default function HeroVideo({
       return goFallback();
     }
 
+    // Safety nets, so the hero can never get stuck on its still image (seen on some iPhones: Low
+    // Power Mode refuses to play videos, and iOS drops the 3D context when memory runs short):
+    // - the headline and text come in after 3 s at most, even before the first 3D frame
+    // - if iOS takes the 3D context away, or the hero has been on screen for 8 s without a single
+    //   frame, it switches to the plain video
+    const textTimer = window.setTimeout(() => (stage.dataset.textIn = "true"), 3000);
+    let gaveUp = false;
+    const giveUp = () => {
+      if (gaveUp) return;
+      gaveUp = true;
+      requestAnimationFrame(() => setMode("fallback"));
+    };
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      giveUp();
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    let waitedVisible = 0; // seconds on screen without a frame
+
     /* ---------- Programs ---------- */
     let geoProg, bgProg, meshProg, postProg;
     try {
@@ -1403,6 +1422,13 @@ export default function HeroVideo({
         return;
       }
       wasVisible = true;
+      if (!hasFrame && !document.hidden) {
+        waitedVisible += Math.min(rawMs / 1000, 0.25);
+        // 8 s once the first clip has arrived (or can't play) and still nothing shows; on a slow
+        // connection that's still downloading, give it longer
+        const clipHere = playBlocked || vA.readyState >= 2 || !!vA.error;
+        if (waitedVisible > (clipHere ? 8 : 25)) giveUp();
+      }
 
       // Automatic resolution: drop quality as soon as frames come noticeably slower than the
       // screen refreshes, raise it again once there is headroom. The refresh interval is
@@ -1982,7 +2008,7 @@ export default function HeroVideo({
           const base = cssH - gutter * 1.15 - prog * 0.18 * cssH - fsz * BAND.lift + msY * 14 * BAND.parallax;
           const yTop = base - fsz * BAND.top;
           const yBot = base - fsz * BAND.bottom;
-          gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -(roll - tallRoll) * 0.9, BAND.opacity * tA);
+          gl.uniform4f(postProg.u("uBand"), (cssH - yBot) * kk, (cssH - yTop) * kk, -(roll - tallRoll) * 0.9, BAND.opacity * tA * (1 - tallK));
           gl.uniform1f(postProg.u("uBandX"), cssW * 0.5 * kk);
           const ls = BAND.labelSize / LABEL_PX;
           const lx0 = cssW * BAND.labelX;
@@ -2039,6 +2065,8 @@ export default function HeroVideo({
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(textTimer);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
       dbgEl?.remove();
       abort.abort();
       stream?.close();
