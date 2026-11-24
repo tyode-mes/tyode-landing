@@ -834,7 +834,11 @@ export default function HeroVideo({
     // The smaller clips only suit small screens and slow connections: stretched across a big screen they
     // look soft and the parts blur into each other, so a weaker desktop keeps the full clips (it still gets
     // the lighter render settings below).
-    const clips = sd && (smallScreen || slowNet) ? sd : hd;
+    // Pick the clips by how many pixels the hero really draws, not by the "small screen" test above: that one
+    // also catches laptops whose browser window is under 700px tall, and the 768px lite clips stretched across
+    // a laptop look blurry. Phones (drawn at 1x, see MAX_DPR) and small windows still get the lighter clips.
+    const drawnWidth = window.innerWidth * Math.min(window.devicePixelRatio || 1, lite ? 1 : 2);
+    const clips = sd && (slowNet || drawnWidth < 900) ? sd : hd;
     const GRID_X = lite ? 200 : 320;
     const GRID_Y = lite ? 112 : 180;
     const MAX_SCALE = lite ? 1.0 : 1.5; // render scale relative to the screen (above 1 = anti-aliasing)
