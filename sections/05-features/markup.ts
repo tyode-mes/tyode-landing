@@ -182,7 +182,7 @@ export const FEATURES_MARKUP = String.raw`
 
           <article class="ft-item" data-i="0">
             <h3><span class="ln"><span>Counted by machine,</span></span><span class="ln"><span>not by hand.</span></span></h3>
-            <p>Every build is read from the machine's PLC or auto-stitch signal, and only counts if it takes the minimum build time.</p>
+            <p>Every build is read from the machine's PLC or, on machines without one, the auto-stitch start, stitch and end signals from clip-on auxiliary contacts, and only counts if it takes the minimum build time for the tyre size.</p>
             <ul><li>Staff-card sign-in</li><li>Short cycles reviewed</li><li>Heartbeat alert</li></ul>
           </article>
           <article class="ft-item" data-i="1">

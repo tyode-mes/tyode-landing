@@ -219,7 +219,7 @@
 .h3.no3d .h3-item h3 .ln > span{opacity:1;transform:none}
 
 /* closing */
-.h3 .h3-close{max-width:980px;margin:0 auto;padding:clamp(90px,14vh,160px) 24px clamp(100px,16vh,180px);text-align:center}
+.h3 .h3-close{max-width:1120px;margin:0 auto;padding:clamp(112px,17vh,196px) 24px clamp(32px,5vh,64px);text-align:center}
 .h3 .h3-close h2{margin:0;font-size:clamp(2.4rem,5.6vw,5.4rem);font-weight:600;letter-spacing:-.05em;line-height:1}
 .h3 .h3-close h2 span{color:#77777c}
 .h3 .h3-next{display:inline-flex;align-items:center;gap:12px;margin-top:34px;text-decoration:none;color:#fff;background:var(--ink);border-radius:999px;padding:8px 8px 8px 22px;font-weight:500;font-size:16px}
@@ -231,6 +231,22 @@
   .h3 .h3-intro .ln > span{transform:none}.h3 .h3-intro p,.h3 .h3-alt{opacity:1;transform:none}
 }
 
+/* From paper to proof: a larger, tighter centred heading above the card */
+.h3 .h3-cmp h3{display:flex;flex-direction:column;align-items:center;gap:12px;margin:0 0 clamp(18px,2.6vh,26px);padding:0;
+  font-size:clamp(1.9rem,3.2vw,3rem);letter-spacing:-.05em;line-height:1;text-align:center}
+@media (max-width:620px){.h3 .h3-cmp h3{gap:10px;font-size:1.75rem}}
+/* Comparison table: a little taller rows and card padding (desktop and tablet; phones keep their stacked layout) */
+@media (min-width:621px){
+  .h3 .h3-cmp-card{padding-top:clamp(12px,1.4vw,20px);padding-bottom:clamp(12px,1.4vw,20px)}
+  .h3 .h3-cmp th{padding:22px 0 16px}
+  .h3 .h3-cmp td{padding:23px 0}
+  .h3 .h3-cmp td + td::before{top:calc(23px + .75em)}
+}
+/* Comparison card: bigger on wide screens with exactly the same proportions (everything inside scales
+   together), so there is less empty page on the two sides without the card getting flatter */
+@media (min-width:1300px){.h3 .h3-close{max-width:calc(1072px * 1.08 + 48px)}.h3 .h3-cmp{zoom:1.08}}
+@media (min-width:1500px){.h3 .h3-close{max-width:calc(1072px * 1.16 + 48px)}.h3 .h3-cmp{zoom:1.16}}
+@media (min-width:1800px){.h3 .h3-close{max-width:calc(1072px * 1.26 + 48px)}.h3 .h3-cmp{zoom:1.26}}
 /* labels on the tyre (Tread, Cushion, Base...): a proper entrance each time one appears. The dot pops in
    and sends out a ring, the line draws out, the card rises out of a blur, then its name and code slide up.
    In the build stage the three labels come in one after another, from the inside out. The 3D code still

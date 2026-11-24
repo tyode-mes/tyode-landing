@@ -97,7 +97,7 @@ const P_SCENARIOS: Scenario[] = [
     ] },
   { key: "soon", clock: "Wed 10:35", title: "A stitch comes too soon",
     body: "The stitcher runs again six minutes after the last tyre, to push the count up.",
-    steps: [{ action: "Run the stitcher again", result: "Flagged, not counted. A tyre can't be built in 6 minutes, and the minimum gap set for this line is 15. The flag goes to the supervisor." }] },
+    steps: [{ action: "Run the stitcher again", result: "Flagged, not counted. A tyre can't be built in 6 minutes, and the minimum build time for this tyre size is 15 minutes. The flag goes to the supervisor." }] },
   { key: "claim", clock: "Months later", title: "A customer returns a tyre",
     body: `A customer sends back ${P_HERO} with a complaint. What happened to this tyre?`,
     steps: [{ action: "Scan the returned tyre", result: "Its whole history on one page: who built it and when, its compound batches, the press, mould and cure, its inspection readings, and the unusual cure flagged at the time." }] },

@@ -52,8 +52,6 @@ function createScrollBus() {
   // after clear multi-event precision-trackpad proof (never flips back to instant stop)
   let inputMode: "mouse" | "touchpad" = "mouse";
   let lastWheelTime = 0;
-  let tinyStreak = 0;
-  let spinStreak = 0;
 
   // Touch & keyboard guards
   let isTouchActive = false;
@@ -159,34 +157,14 @@ function createScrollBus() {
 
     const absD = Math.abs(rawDelta);
 
-    // Require clear multi-frame proof before entering touchpad mode
-    const isTinyFluid = e.deltaMode === 0 && (Math.abs(e.deltaX) > 0 || (absD < 26 && gap < 28));
-    if (isTinyFluid) {
-      tinyStreak = Math.min(tinyStreak + 1, 10);
-      if (tinyStreak >= 3 || Math.abs(e.deltaX) > 0) {
-        inputMode = "touchpad";
-      }
-    } else if (e.deltaMode !== 0 || absD >= 36) {
-      tinyStreak = 0;
-      inputMode = "mouse";
-    }
+    // Touchpads (and fast-spun wheels) send a stream of events a few ms apart; a mouse notch is a single,
+    // spaced-out event. Decided per event, so the feel can never get stuck in the wrong mode.
+    inputMode = e.deltaMode === 0 && (gap < 40 || absD < 40 || Math.abs(e.deltaX) > 0) ? "touchpad" : "mouse";
 
-    if (inputMode === "mouse") {
-      // Normalize single notch across Windows 100%/125%/150% DPI & mice
-      const sign = Math.sign(rawDelta);
-      const notches = clamp(absD / 100, 0.8, 2.5);
-      if (gap < 150) spinStreak = Math.min(spinStreak + 1, 8);
-      else spinStreak = 0;
-
-      // Rich travel + smooth spin acceleration when flicking the wheel multiple notches
-      const spinBoost = 1 + spinStreak * 0.085;
-      const step = sign * notches * 145 * spinBoost;
-      state.targetY = clamp(state.targetY + step, 0, state.maxScroll);
-    } else {
-      spinStreak = 0;
-      const clamped = clamp(rawDelta, -220, 220);
-      state.targetY = clamp(state.targetY + clamped * 1.06, 0, state.maxScroll);
-    }
+    // Move by what the device reported, capped per event, and never queue more than a screen ahead of
+    // where the page is. One swipe or notch moves the page as far as the user meant, never to the end.
+    state.targetY = clamp(state.targetY + clamp(rawDelta, -180, 180), 0, state.maxScroll);
+    state.targetY = clamp(state.targetY, window.scrollY - state.vh, window.scrollY + state.vh);
 
     wake();
   };
@@ -282,15 +260,15 @@ function createScrollBus() {
         state.y = chaseY = state.targetY = animTo;
         animActive = false;
       }
-    } else if (inputMode === "mouse") {
-      // True AAA Lenis-grade butter glide:
-      // chaseY smooths out frame-1 notch harshness; state.y glides smoothly for ~1.1s to a feather stop
-      chaseY += (state.targetY - chaseY) * (1 - Math.exp(-14 * dt));
-      state.y += (chaseY - state.y) * (1 - Math.exp(-3.6 * dt));
     } else {
-      // Touchpad: silky luxury feathering (never instant stop)
-      chaseY += (state.targetY - chaseY) * (1 - Math.exp(-22 * dt));
-      state.y += (chaseY - state.y) * (1 - Math.exp(-7.2 * dt));
+      // One smooth ease towards the target: a short, soft glide for mouse notches (about 0.35s) and a
+      // near-direct follow for touchpads, which already have their own momentum. Never faster than three
+      // screens a second, so a hard flick becomes a quick sweep, not a jump. The hero uses the same feel.
+      const k = inputMode === "mouse" ? 12 : 20;
+      const step = (state.targetY - state.y) * (1 - Math.exp(-k * dt));
+      const maxStep = state.vh * 3 * dt;
+      state.y += clamp(step, -maxStep, maxStep);
+      chaseY = state.y;
     }
 
     state.velocity = (state.y - prevY) / dt;

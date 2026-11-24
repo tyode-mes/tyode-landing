@@ -11,7 +11,6 @@ import s from "../demo.module.css";
 export default function Report() {
   const { st } = useDemo();
   const c = counts();
-  const ok = st.approvedUnattributed;
   const hours = byHour();
   const stage = (k: string) => TYRES.filter((t) => t.stage === k).length;
   return (
@@ -24,9 +23,9 @@ export default function Report() {
         <Card title="Green tyre count">
           <div className={s.facts}>
             <div><span>Stitch signals</span><b>{c.signals}</b></div>
-            <div><span>Counted (verified)</span><b>{c.counted + (ok ? 1 : 0)}</b></div>
+            <div><span>Counted (verified)</span><b>{c.counted}</b></div>
             <div><span>Flagged, not counted</span><b>{c.flagged}</b></div>
-            <div><span>Unattributed</span><b>{ok ? "0 (1 approved)" : c.unattributed}</b></div>
+            <div><span>Credited to first builder signed in</span><b>{c.late}</b></div>
             <div><span>Counts typed by hand</span><b>0</b></div>
             <div><span>Counters online</span><b>{MACHINES.length}/{MACHINES.length}</b></div>
           </div>
@@ -49,7 +48,7 @@ export default function Report() {
             <thead><tr><th>Builder</th><th>Machine</th><th>Counted</th><th>Flagged</th></tr></thead>
             <tbody>
               {BUILDERS.map((b) => { const k = counts(b.machine); return (
-                <tr key={b.badge}><td>{b.name}<small>Badge {b.badge}</small></td><td>{b.machine}</td><td>{k.counted + (b.machine === "BM-06" && ok ? 1 : 0)}</td><td>{k.flagged}</td></tr>
+                <tr key={b.badge}><td>{b.name}<small>Badge {b.badge}</small></td><td>{b.machine}</td><td>{k.counted}</td><td>{k.flagged}</td></tr>
               ); })}
             </tbody>
           </table>
@@ -66,8 +65,8 @@ export default function Report() {
         <table className={s.table}>
           <thead><tr><th>Time</th><th>Machine</th><th>Type</th><th>Reason</th></tr></thead>
           <tbody>
-            {STITCHES.filter((x) => x.kind !== "counted").map((x) => (
-              <tr key={x.id}><td>{hhmm(x.at)}</td><td>{x.machine}</td><td>{x.kind === "flagged" ? "Too soon" : ok ? "No badge (approved)" : "No badge"}</td><td>{x.reason}</td></tr>
+            {STITCHES.filter((x) => x.kind === "flagged" || x.late).map((x) => (
+              <tr key={x.id}><td>{hhmm(x.at)}</td><td>{x.machine}</td><td>{x.kind === "flagged" ? "Too soon" : "Credited late"}</td><td>{x.reason}</td></tr>
             ))}
           </tbody>
         </table>

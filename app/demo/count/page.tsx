@@ -3,19 +3,16 @@
 /* Screen 07: green tyre count. The count comes only from each building machine's auto-stitch signal. */
 
 import Link from "next/link";
-import { BUILDERS, DATE, HEARTBEAT_LIMIT, MACHINES, MIN_GAP, NOW, STITCHES, builderFor, byHour, counts, events, hhmm } from "../data";
-import { useDemo } from "../store";
+import { BUILDERS, DATE, HEARTBEAT_LIMIT, MACHINES, MIN_BUILD, NOW, STITCHES, builderFor, byHour, counts, events, hhmm } from "../data";
 import { Card, Kpi, PageHead, Pill } from "../ui";
 import s from "../demo.module.css";
 
 export default function GreenTyreCount() {
-  const { st, set } = useDemo();
   const c = counts();
-  const approved = st.approvedUnattributed;
-  const counted = c.counted + (approved ? 1 : 0), unatt = approved ? 0 : c.unattributed;
+  const counted = c.counted;
   const hours = byHour();
   const max = Math.max(...hours.map((h) => h.counted + h.flagged));
-  const flags = STITCHES.filter((x) => x.kind !== "counted").sort((a, b) => b.at - a.at);
+  const flags = STITCHES.filter((x) => x.kind === "flagged" || x.late).sort((a, b) => b.at - a.at);
   const ev = events().slice(0, 6);
 
   return (
@@ -27,13 +24,13 @@ export default function GreenTyreCount() {
 
       <div className={`${s.kpis} ${s.kpis4}`}>
         <Kpi label="Counted (verified)" value={counted} sub="Valid stitch, badge logged in" />
-        <Kpi label="Flagged attempts" value={c.flagged} tone="amber" sub={`Under the ${MIN_GAP} min gap, not counted`} href="#flags" />
-        <Kpi label="Unattributed" value={unatt} tone={unatt ? "amber" : undefined} sub={unatt ? "No badge, needs approval" : "None waiting"} href="#flags" />
+        <Kpi label="Flagged attempts" value={c.flagged} tone="amber" sub="Under the minimum build time, not counted" href="#flags" />
+        <Kpi label="Credited late" value={c.late} sub={c.late ? "No badge at the stitch, so it went to the first builder signed in" : "None"} href="#flags" />
         <Kpi label="Counters online" value={`${MACHINES.length}/${MACHINES.length}`} tone="green" sub={`Heartbeat every minute, alert after ${HEARTBEAT_LIMIT} min`} href="/demo/devices" />
       </div>
 
       <p className={s.balance}>
-        {c.signals} stitch signals = {counted} counted + {c.flagged} flagged{unatt ? ` + ${unatt} unattributed` : ""}. Scrap is recorded separately and is not part of this count.
+        {c.signals} stitch signals = {counted} counted + {c.flagged} flagged. Scrap is recorded separately and is not part of this count.
       </p>
 
       <div className={s.gridMain}>
@@ -47,7 +44,7 @@ export default function GreenTyreCount() {
             <tbody>
               {BUILDERS.map((b) => {
                 const k = counts(b.machine);
-                const mine = k.counted + (b.machine === "BM-06" && approved ? 1 : 0);
+                const mine = k.counted;
                 return (
                   <tr key={b.badge}>
                     <td><b>{b.name}</b><small>Badge {b.badge}</small></td>
@@ -55,8 +52,8 @@ export default function GreenTyreCount() {
                     <td>{mine}</td>
                     <td>{k.flagged ? <span className={s.gapAmber}>{k.flagged}</span> : <span className={s.zero}>0</span>}</td>
                     <td>
-                      {k.unattributed && !approved ? <Pill tone="amber">1 unattributed</Pill>
-                        : k.flagged ? <Pill tone="amber">Flag to review</Pill> : <Pill tone="green">Counting</Pill>}
+                      {k.flagged ? <Pill tone="amber">Flag to review</Pill>
+                        : k.late ? <Pill tone="green">Counting · 1 credited late</Pill> : <Pill tone="green">Counting</Pill>}
                     </td>
                   </tr>
                 );
@@ -86,25 +83,20 @@ export default function GreenTyreCount() {
         </Card>
 
         <section className={s.flagPanel} id="flags" aria-labelledby="flags-h">
-          <h2 id="flags-h">Flags and approvals ({flags.length})</h2>
+          <h2 id="flags-h">Flags to review ({flags.length})</h2>
           <div className={s.missList}>
             {flags.map((f) => {
               const b = builderFor(f.machine);
-              const isU = f.kind === "unattributed";
+              const isLate = !!f.late;
               return (
-                <div key={f.id} className={`${s.flagItem} ${isU && approved ? s.flagDone : ""}`}>
+                <div key={f.id} className={`${s.flagItem} ${isLate ? s.flagDone : ""}`}>
                   <div className={s.flagTop}>
-                    <Pill tone={isU ? (approved ? "green" : "amber") : "amber"}>{isU ? (approved ? "Approved" : "No badge") : "Too soon"}</Pill>
+                    <Pill tone={isLate ? "green" : "amber"}>{isLate ? "Credited late" : "Too soon"}</Pill>
                     <time>{hhmm(f.at)} · {f.machine}</time>
                   </div>
                   <span>{f.reason}</span>
-                  {isU && !approved && (
-                    <button type="button" className={s.btnSmall} onClick={() => set((x) => ({ ...x, approvedUnattributed: true }))}>
-                      Approve for {b.name}
-                    </button>
-                  )}
-                  {isU && approved && <em>Approved by the shift supervisor and credited to {b.name}. Logged.</em>}
-                  {!isU && <em>Not counted. Logged against badge {f.badge}.</em>}
+                  {isLate && <em>Counted and credited to {b.name}, the first builder signed in this shift. Logged.</em>}
+                  {!isLate && <em>Not counted. The supervisor can approve it as a genuine fast build or reject it. Logged against badge {f.badge}.</em>}
                 </div>
               );
             })}
@@ -117,9 +109,9 @@ export default function GreenTyreCount() {
         <Card title="How a stitch becomes a count">
           <ol className={s.howSteps}>
             <li><b>Badge log-in</b><span>The operator taps their badge at the building machine. Every count is linked to it.</span></li>
-            <li><b>Auto-stitch signal</b><span>Tyode reads the machine&apos;s PLC signal, or the stitch signal or button if there is no PLC. Read only.</span></li>
-            <li><b>Checks</b><span>At least {MIN_GAP} minutes since the last stitch on that machine, and a badge logged in.</span></li>
-            <li><b>Counted and labelled</b><span>A valid stitch is counted and a GT- label prints for the green tyre. Anything else is flagged or held for approval.</span></li>
+            <li><b>Auto-stitch signal</b><span>Tyode reads the machine&apos;s PLC signal, or the start, stitch and end signals from clip-on auxiliary contacts if there is no PLC. Read only.</span></li>
+            <li><b>Checks</b><span>At least the minimum build time for the tyre size since the last stitch on that machine: {MIN_BUILD["185/65 R15"]} min for 185/65 R15, {MIN_BUILD["195/65 R15"]} min for 195/65 R15.</span></li>
+            <li><b>Counted and labelled</b><span>A valid stitch is counted and a GT- label prints for the green tyre. A stitch that comes too soon is flagged for the supervisor. A stitch with no badge logged in goes to the first builder who signs in that shift.</span></li>
           </ol>
           <p className={s.muted}>Each counter sends a heartbeat every minute. If none arrives for {HEARTBEAT_LIMIT} minutes an alert is raised, so a counter can&apos;t be quietly unplugged. Together these make the count difficult to cheat.</p>
         </Card>

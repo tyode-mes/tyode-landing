@@ -38,7 +38,7 @@ function answer(q: string, st: DemoState): Answer {
     const id = `BM-0${machine[1]}`, c = counts(id), b = builderFor(id);
     if (!b) return { unknown: true, sources: [], text: `There is no machine ${id} on line PL-1.` };
     return {
-      text: `${id} counted ${c.counted} tyres this shift, all by ${b.name} (badge ${b.badge}).${c.flagged ? ` ${c.flagged} more stitch${c.flagged > 1 ? "es were" : " was"} flagged for coming under 15 minutes after the last one, and not counted.` : ""}${c.unattributed ? ` ${c.unattributed} stitch had no badge logged in and is waiting for supervisor approval.` : ""}`,
+      text: `${id} counted ${c.counted} tyres this shift, all by ${b.name} (badge ${b.badge}).${c.flagged ? ` ${c.flagged} more stitch${c.flagged > 1 ? "es were" : " was"} flagged for coming sooner than the minimum build time for the tyre size, and not counted.` : ""}${c.late ? ` ${c.late} of the counted stitches had no badge logged in, so ${c.late > 1 ? "they were" : "it was"} credited to the first builder who signed in that shift.` : ""}`,
       sources: [{ label: `${id} stitch log, Shift A` }, { label: `Badge log ${id}` }, { label: "Green tyre count", href: "/demo/count" }],
     };
   }
@@ -55,7 +55,7 @@ function answer(q: string, st: DemoState): Answer {
     }
     const sx = STITCHES.find((y) => y.serial === t.serial)!;
     const b = t.badge ? builderFor(t.machine) : undefined;
-    return { text: b ? `${b.name}, badge ${b.badge}, on ${t.machine}. It was stitched at ${hhmm(t.builtAt)} and counted from signal ${sx.id}.` : `It was stitched on ${t.machine} at ${hhmm(t.builtAt)} with no badge logged in, so it is unattributed until a supervisor approves it.`, sources: [...src, { label: `Stitch ${sx.id}` }, { label: `Badge log ${t.machine}` }] };
+    return { text: b ? `${b.name}, badge ${b.badge}, on ${t.machine}. It was stitched at ${hhmm(t.builtAt)} and counted from signal ${sx.id}.${sx.late ? " No badge was logged in at the stitch, so it was credited to the first builder who signed in that shift." : ""}` : `It was stitched on ${t.machine} at ${hhmm(t.builtAt)} and counted from signal ${sx.id}.`, sources: [...src, { label: `Stitch ${sx.id}` }, { label: `Badge log ${t.machine}` }] };
   }
   return { unknown: true, sources: [], text: "I couldn't find records that answer that, so I won't guess. Try asking about a tyre label, a building machine, a press or a compound batch." };
 }

@@ -63,35 +63,8 @@ export function initOverview(sec: HTMLElement): () => void {
     head.style.setProperty("--p", "1");
   }
 
-  /* 4. Card rise: the overview slides up over the hero, which drifts back,
-     shrinks and fades. Works on whatever section sits directly above this one,
-     so no hero or page changes are needed. */
-  const hero = sec.previousElementSibling as HTMLElement | null;
-  if (hero && !reduce) {
-    hero.style.transformOrigin = "50% 0%";
-    hero.style.willChange = "transform, opacity, filter";
-    let raf2 = 0;
-    const tick = () => {
-      raf2 = 0;
-      const vh = window.innerHeight;
-      const top = sec.getBoundingClientRect().top;
-      const hp = Math.min(1, Math.max(0, (vh - top) / vh)); // 0: overview below the fold, 1: overview at the top
-      const e = hp * hp * (3 - 2 * hp); // smoothstep
-      hero.style.transform = `translate3d(0, ${(hp * vh * 0.55).toFixed(1)}px, 0) scale(${(1 - e * 0.07).toFixed(4)})`;
-      hero.style.opacity = (1 - e * 0.65).toFixed(3);
-      hero.style.filter = e > 0.01 ? `blur(${(e * 6).toFixed(2)}px)` : "";
-    };
-    const onScroll2 = () => { if (!raf2) raf2 = requestAnimationFrame(tick); };
-    tick();
-    window.addEventListener("scroll", onScroll2, { passive: true });
-    window.addEventListener("resize", onScroll2);
-    cleanups.push(() => {
-      window.removeEventListener("scroll", onScroll2);
-      window.removeEventListener("resize", onScroll2);
-      cancelAnimationFrame(raf2);
-      ["transform", "opacity", "filter", "transformOrigin", "willChange"].forEach((k) => hero.style.removeProperty(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())));
-    });
-  }
+  /* 4. No scroll effect between the hero and the overview: the hero is left exactly as it is, and the
+     overview starts straight under it. */
 
   return () => { io.disconnect(); cleanups.forEach((f) => f()); };
 }
